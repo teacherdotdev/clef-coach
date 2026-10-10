@@ -32,8 +32,8 @@
 		</p>
 		<p>
 			Questions or concerns? Email
-			<a href="mailto:directors@edtechathon.com?subject=clefcoach%20privacy"
-				>directors@edtechathon.com</a
+			<a href="mailto:support@teacher.dev?subject=clefcoach%20privacy"
+				>support@teacher.dev</a
 			>.
 		</p>
 	</section>

@@ -54,8 +54,8 @@
 			We'd love to hear from you. Tell us what's working, what's not, or pitch us an idea for a tool
 			you wish existed. We're here to help.
 		</p>
-		<a class="btn-dark" href="mailto:directors@edtechathon.com?subject=clefcoach%20feedback">
-			Email directors@edtechathon.com
+		<a class="btn-dark" href="mailto:support@teacher.dev?subject=clefcoach%20feedback">
+			Email support@teacher.dev
 		</a>
 	</section>
 </div>
