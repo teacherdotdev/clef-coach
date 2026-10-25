@@ -61,9 +61,11 @@ cut-down one, and the Advanced level reaches as far as the staff can show.
 ## Phase 3: oboe, bassoon, strings
 
 7. **Oboe keeps the real mechanism a middle schooler uses.** That means both
-   octave keys, the half-hole, and the left F key. Regular F (with the left F
-   key) is first-taught, and forked F is accepted. Second octave key notes come
-   in at Advanced.
+   octave keys, the half-hole, and the F keys. Regular F, with the right F key
+   that every oboe has, is first-taught. Left F, which student oboes often
+   lack, and forked F are also accepted. (This corrects a first draft that
+   named the left F key; all four charts consulted teach right F first.)
+   Second octave key notes come in at Advanced.
 8. **Bassoon reads bass clef only**, with no tenor clef even at Advanced. The
    drawing includes the whisper key and the flick keys. Flicked notes are
    accepted with or without the flick, since many teachers introduce flicking

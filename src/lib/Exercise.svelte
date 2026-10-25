@@ -514,9 +514,9 @@
 	}
 
 	/** A fingering in words: "valves 1 and 2", "6th position", "the B♭4 key". */
-	function playedLabel(answer: string): string {
+	function playedLabel(answer: string, spelled = false): string {
 		if (!practice?.instrument || practice.controls === 'bars') return `the ${keyName(answer)} key`;
-		return describeBandFingering(practice.instrument, answer);
+		return describeBandFingering(practice.instrument, answer, spelled);
 	}
 
 	function keyName(answer: string): string {
@@ -549,7 +549,7 @@
 	// have written in, so it doubles as the answer key for the reveal.
 	const revealText = $derived.by(() => {
 		if (step === 'note') return `It was ${noteLabel(keySig, current.note.letter, written)}`;
-		if (step === 'play') return reveal ? `It was ${playedLabel(reveal.want)}` : '';
+		if (step === 'play') return reveal ? `It was ${playedLabel(reveal.want, true)}` : '';
 		if (step === 'spot') return reveal ? `It was the ${spotLabel(reveal.want)}` : '';
 		if (step === 'accidental')
 			return `It was ${current.note.letter}${ACCIDENTAL_SYMBOLS[sounding]}`;

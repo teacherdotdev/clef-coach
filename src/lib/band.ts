@@ -13,11 +13,37 @@
 
 import { chromaticPitch, ordinal, pitchClass, type Clef, type KeyId } from './music';
 import { keysIn, type Woodwind } from './woodwinds';
+import { BASSOON } from './woodwinds/bassoon';
+import { CLARINET } from './woodwinds/clarinet';
+import { FLUTE } from './woodwinds/flute';
+import { OBOE } from './woodwinds/oboe';
+import { SAXOPHONE } from './woodwinds/saxophone';
 
 export type BandInstrument =
-	'trumpet' | 'horn' | 'trombone' | 'baritone' | 'baritoneTC' | 'tuba' | 'bells';
+	| 'flute'
+	| 'oboe'
+	| 'clarinet'
+	| 'bassoon'
+	| 'altoSax'
+	| 'tenorSax'
+	| 'bariSax'
+	| 'trumpet'
+	| 'horn'
+	| 'trombone'
+	| 'baritone'
+	| 'baritoneTC'
+	| 'tuba'
+	| 'bells';
 
+// In score order, woodwinds first, as a band director reads down the score.
 export const ALL_BAND_INSTRUMENTS: BandInstrument[] = [
+	'flute',
+	'oboe',
+	'clarinet',
+	'bassoon',
+	'altoSax',
+	'tenorSax',
+	'bariSax',
 	'trumpet',
 	'horn',
 	'trombone',
@@ -124,8 +150,97 @@ export interface BandInstrumentDef {
 }
 
 // The ranges are written pitch. Beginner is the "first five": concert B♭, C,
-// D, E♭, F, in each instrument's own octave and transposition.
+// D, E♭, F, in each instrument's own octave and transposition. The woodwind
+// octaves are assumptions a teacher should check
+// (docs/specs/phase-2-3-assumptions.md).
 export const BAND_INSTRUMENTS: Record<BandInstrument, BandInstrumentDef> = {
+	flute: {
+		id: 'flute',
+		name: 'Flute',
+		clef: 'treble',
+		transposition: 0,
+		controls: 'woodwind',
+		levels: {
+			beginner: { low: 'B4', high: 'F5' },
+			intermediate: { low: 'D4', high: 'D6' },
+			advanced: { low: 'C4', high: 'E6' }
+		}
+	},
+	oboe: {
+		id: 'oboe',
+		name: 'Oboe',
+		clef: 'treble',
+		transposition: 0,
+		controls: 'woodwind',
+		levels: {
+			beginner: { low: 'B4', high: 'F5' },
+			intermediate: { low: 'D4', high: 'D6' },
+			advanced: { low: 'B3', high: 'E6' }
+		}
+	},
+	// Intermediate crosses the break, the second-year clarinettist's milestone.
+	clarinet: {
+		id: 'clarinet',
+		name: 'Clarinet',
+		clef: 'treble',
+		transposition: 2,
+		controls: 'woodwind',
+		levels: {
+			beginner: { low: 'C4', high: 'G4' },
+			intermediate: { low: 'G3', high: 'E5' },
+			advanced: { low: 'F3', high: 'E6' }
+		}
+	},
+	bassoon: {
+		id: 'bassoon',
+		name: 'Bassoon',
+		clef: 'bass',
+		transposition: 0,
+		controls: 'woodwind',
+		levels: {
+			beginner: { low: 'B2', high: 'F3' },
+			intermediate: { low: 'F2', high: 'C4' },
+			advanced: { low: 'B1', high: 'G4' }
+		}
+	},
+	// The three saxophones finger alike and read treble clef; they differ in
+	// the key they read concert pitch in, and tenor starts an octave up.
+	altoSax: {
+		id: 'altoSax',
+		name: 'Alto Sax',
+		clef: 'treble',
+		transposition: 9,
+		controls: 'woodwind',
+		levels: {
+			beginner: { low: 'G4', high: 'D5' },
+			intermediate: { low: 'D4', high: 'C6' },
+			advanced: { low: 'B3', high: 'E6' }
+		}
+	},
+	tenorSax: {
+		id: 'tenorSax',
+		name: 'Tenor Sax',
+		clef: 'treble',
+		transposition: 2,
+		controls: 'woodwind',
+		levels: {
+			beginner: { low: 'C5', high: 'G5' },
+			intermediate: { low: 'D4', high: 'C6' },
+			advanced: { low: 'B3', high: 'E6' }
+		}
+	},
+	bariSax: {
+		id: 'bariSax',
+		name: 'Bari Sax',
+		clef: 'treble',
+		transposition: 9,
+		controls: 'woodwind',
+		levels: {
+			beginner: { low: 'G4', high: 'D5' },
+			intermediate: { low: 'D4', high: 'C6' },
+			advanced: { low: 'B3', high: 'E6' }
+		}
+	},
 	trumpet: {
 		id: 'trumpet',
 		name: 'Trumpet',
@@ -386,7 +501,15 @@ function byPitch(chart: Chart, shift = 0): Map<number, string[]> {
 // Each woodwind's keys and chart live in a file of their own under
 // ./woodwinds/, since a woodwind's chart is as much its key layout as its
 // fingerings.
-const WOODWINDS: Partial<Record<BandInstrument, Woodwind>> = {};
+const WOODWINDS: Partial<Record<BandInstrument, Woodwind>> = {
+	flute: FLUTE,
+	oboe: OBOE,
+	clarinet: CLARINET,
+	bassoon: BASSOON,
+	altoSax: SAXOPHONE,
+	tenorSax: SAXOPHONE,
+	bariSax: SAXOPHONE
+};
 
 /** The key layout and chart for a woodwind; null for any other instrument. */
 export function woodwindOf(inst: BandInstrument | null): Woodwind | null {
@@ -484,15 +607,22 @@ export function isRightFingering(inst: BandInstrument, pitch: number, answer: st
 }
 
 /** "valves 1 and 2", "open", "trigger and valve 1", "6th position". */
-export function describeBandFingering(inst: BandInstrument, fingering: string): string {
+export function describeBandFingering(
+	inst: BandInstrument,
+	fingering: string,
+	spelled = false
+): string {
 	const controls = BAND_INSTRUMENTS[inst].controls;
 	if (controls === 'slide') return `${ordinal(Number(fingering))} position`;
 	if (controls === 'bars') return 'that bar';
 	if (controls === 'woodwind') {
 		const layout = woodwindOf(inst)!.layout;
 		const held = keysIn(fingering);
-		const names = layout.keys.filter((k) => held.has(k.id)).map((k) => k.label);
-		return names.length ? names.join(' ') : 'no keys';
+		const pressed = layout.keys.filter((k) => held.has(k.id));
+		if (!pressed.length) return 'no keys';
+		// Spelled out when the answer is read back, where "1 2 3 1 2" would not
+		// say which hand; short on the answer chips.
+		return spelled ? pressed.map((k) => k.name).join(', ') : pressed.map((k) => k.label).join(' ');
 	}
 	const held = [...valvesIn(fingering)];
 	const trigger = held.includes('T');

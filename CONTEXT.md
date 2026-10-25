@@ -78,7 +78,9 @@ pitch and **Baritone T.C.**, read in treble clef as a B♭ instrument like the
 trumpet. Alto, tenor and baritone sax share one set of fingerings but transpose
 differently. The **horn** is a double horn: three valves plus the thumb trigger
 for the B♭ side, with both sides' fingerings accepted. Tuba and euphonium have
-three valves and the trombone has no F trigger, for now.
+three valves and the trombone has no F trigger, for now. The woodwinds are
+flute, oboe, clarinet, bassoon, and alto, tenor and baritone sax. The three
+saxes share one key diagram and chart, read in written pitch.
 
 ## Score display
 
@@ -143,6 +145,15 @@ The drawing shows the whole instrument small, so it is recognisable, with the
 part that is played drawn large beside it: the trumpet's valve caps seen from
 the player's side, the trombone's slide, a woodwind's holes and keys laid out
 where they really are but enlarged to tap.
+
+## Key diagram
+
+A woodwind's drawing: every key and tone hole a student touches, laid out where
+it sits on the instrument but enlarged to click. Clicking presses or releases a
+key; **Play** submits what is held down. Unlike brass there are no computer
+keyboard shortcuts, since a woodwind fingering can hold down ten keys at once.
+The whole keywork is shown at every level. Each woodwind's layout lives in a
+file of its own with its fingering chart.
 
 ## Miss
 

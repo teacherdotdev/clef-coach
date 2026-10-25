@@ -11,9 +11,11 @@ import {
 	isRightFingering,
 	pitchOfName,
 	valveAnswer,
+	woodwindOf,
 	writtenKey,
 	type BandInstrument
 } from './band';
+import { keysIn, woodwindAnswer } from './woodwinds';
 import { ALL_KEYS, fromDiatonicIndex, parseNoteName, pitchInKey } from './music';
 
 /** The written pitches a range asks about in a key. */
@@ -167,6 +169,8 @@ describe('fingerings', () => {
 				for (const f of bandFingerings(inst, p)) {
 					if (controls === 'slide') expect(f).toMatch(/^[1-7]$/);
 					else if (controls === 'bars') expect(f).toBe(String(p));
+					else if (controls === 'woodwind')
+						expect(woodwindAnswer(woodwindOf(inst)!.layout, keysIn(f))).toBe(f);
 					else expect(valveAnswer(f.split(''))).toBe(f);
 					if (controls === 'valves') expect(f).not.toContain('T');
 				}

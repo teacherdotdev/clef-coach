@@ -44,6 +44,9 @@
 	const info = $derived(CONTROLS[controls]);
 	const keyMap = $derived(info.keyboard);
 	const woodwind = $derived(controls === 'woodwind' ? woodwindOf(instrument) : null);
+	const wide = $derived(
+		info.wide || (!!woodwind && woodwind.layout.width > woodwind.layout.height)
+	);
 	const hints = $derived(
 		Object.fromEntries(
 			Object.entries(keyMap).map(([k, v]) => [v, k === ' ' ? 'Space' : k.toUpperCase()])
@@ -134,9 +137,10 @@
 
 <svelte:window onkeydown={keydown} onkeyup={keyup} onblur={blur} />
 
-<div class="pad" class:wide={info.wide}>
-	<!-- A keyboard needs the whole width; its picture would only crowd it. -->
-	{#if art && !info.wide}
+<div class="pad" class:wide>
+	<!-- A keyboard, or a flute's keys, need the whole width; the picture would
+	     only crowd them. -->
+	{#if art && !wide}
 		<img class="art" src={art} alt="" />
 	{/if}
 

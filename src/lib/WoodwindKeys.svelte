@@ -49,6 +49,7 @@
 <svg
 	class="woodwind"
 	class:small
+	class:landscape={layout.width > layout.height}
 	viewBox="0 0 {layout.width} {layout.height}"
 	role="group"
 	aria-label={label}
@@ -92,14 +93,19 @@
 </svg>
 
 <style>
+	/* Upright instruments are limited by height, the flute by width; either
+	   way the keys come out about a fingertip wide. */
 	.woodwind {
 		display: block;
 		width: 100%;
 		max-width: 24rem;
-		max-height: 26rem;
+		max-height: 34rem;
 		margin: 0 auto;
 		user-select: none;
 		-webkit-tap-highlight-color: transparent;
+	}
+	.woodwind.landscape {
+		max-width: 38rem;
 	}
 	.woodwind.small {
 		max-width: 7rem;

@@ -14,7 +14,15 @@ function art(name: string): string {
 }
 
 // Both baritones are the same instrument; only the part they read differs.
+// The three saxophones share one picture, as they share one set of keys.
 const PICTURE: Record<BandInstrument | 'piano', string> = {
+	flute: 'flute',
+	oboe: 'oboe',
+	clarinet: 'clarinet',
+	bassoon: 'bassoon',
+	altoSax: 'saxophone',
+	tenorSax: 'saxophone',
+	bariSax: 'saxophone',
 	trumpet: 'trumpet',
 	horn: 'horn',
 	trombone: 'trombone',
