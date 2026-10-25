@@ -1,35 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 80">
   <!-- B-flat trumpet, side view: mouthpiece left, three piston valves with pearl buttons, a flat loop below, bell flaring right. -->
   <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M16 40 H88 M36 40 C22 40 22 62 36 62 H86 C98 62 98 40 86 40" stroke="#3b2a10" stroke-width="11"/>
-    <path d="M16 40 H88 M36 40 C22 40 22 62 36 62 H86 C98 62 98 40 86 40" stroke="#f2b632" stroke-width="5"/>
+    <path d="M16 40 H88 M36 40 A13 13 0 0 0 36 66 H84 A13 13 0 0 0 84 40" stroke="#3b2a10" stroke-width="11"/>
+    <path d="M16 40 H88 M36 40 A13 13 0 0 0 36 66 H84 A13 13 0 0 0 84 40" stroke="#f2b632" stroke-width="5"/>
   </g>
-  <path d="M84 36 L100 35.5 C109 35 116 29 121 19 L121 61 C116 51 109 45 100 44.5 L84 44 Z" fill="#f2b632"/>
-  <path d="M84 41 L121 41 L121 61 C116 51 109 45 100 44.5 L84 44 Z" fill="#3b2a10" opacity="0.18"/>
-  <path d="M100 37.5 C108 37 113 33 117 26" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
-  <path d="M84 36 L100 35.5 C109 35 116 29 121 19 M121 61 C116 51 109 45 100 44.5 L84 44" fill="none" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
-  <ellipse cx="121" cy="40" rx="4" ry="21" fill="#f2b632"/>
-  <ellipse cx="121" cy="40" rx="4" ry="21" fill="#3b2a10" opacity="0.25"/>
-  <ellipse cx="121" cy="40" rx="4" ry="21" fill="none" stroke="#3b2a10" stroke-width="3"/>
+  <path d="M84 36 L100 35.5 C109 35 115 29 120 19 L120 61 C115 51 109 45 100 44.5 L84 44 Z" fill="#f2b632"/>
+  <path d="M84 41 L120 41 L120 61 C115 51 109 45 100 44.5 L84 44 Z" fill="#3b2a10" opacity="0.18"/>
+  <path d="M100 37.5 C107.5 37 112 33 116 26" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
+  <path d="M84 36 L100 35.5 C109 35 115 29 120 19 M120 61 C115 51 109 45 100 44.5 L84 44" fill="none" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <ellipse cx="120" cy="40" rx="5.2" ry="21" fill="#f2b632"/>
+  <ellipse cx="120" cy="40" rx="5.2" ry="21" fill="#3b2a10" opacity="0.25"/>
+  <ellipse cx="120" cy="40" rx="5.2" ry="21" fill="none" stroke="#3b2a10" stroke-width="3"/>
   <path d="M7 35 C11 37 14 38.5 18 38.5 L18 41.5 C14 41.5 11 43 7 45 Z" fill="#fbf3dc" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round"/>
   <ellipse cx="6" cy="40" rx="2.5" ry="6" fill="#fbf3dc" stroke="#3b2a10" stroke-width="3"/>
   <g stroke="#3b2a10" stroke-width="3" stroke-linejoin="round">
-    <rect x="50" y="18" width="4" height="12" fill="#fbf3dc"/>
-    <rect x="63" y="18" width="4" height="12" fill="#fbf3dc"/>
-    <rect x="76" y="18" width="4" height="12" fill="#fbf3dc"/>
-    <rect x="48" y="30" width="8" height="38" rx="2.5" fill="#f2b632"/>
-    <rect x="61" y="30" width="8" height="38" rx="2.5" fill="#f2b632"/>
-    <rect x="74" y="30" width="8" height="38" rx="2.5" fill="#f2b632"/>
+    <rect x="49.4" y="18" width="5.2" height="12" fill="#fbf3dc"/>
+    <rect x="62.4" y="18" width="5.2" height="12" fill="#fbf3dc"/>
+    <rect x="75.4" y="18" width="5.2" height="12" fill="#fbf3dc"/>
+    <rect x="48" y="30" width="8" height="42" rx="2.5" fill="#f2b632"/>
+    <rect x="61" y="30" width="8" height="42" rx="2.5" fill="#f2b632"/>
+    <rect x="74" y="30" width="8" height="42" rx="2.5" fill="#f2b632"/>
   </g>
   <g fill="#3b2a10" opacity="0.2">
-    <path d="M53 30 H53.5 A2.5 2.5 0 0 1 56 32.5 V65.5 A2.5 2.5 0 0 1 53.5 68 H53 Z"/>
-    <path d="M66 30 H66.5 A2.5 2.5 0 0 1 69 32.5 V65.5 A2.5 2.5 0 0 1 66.5 68 H66 Z"/>
-    <path d="M79 30 H79.5 A2.5 2.5 0 0 1 82 32.5 V65.5 A2.5 2.5 0 0 1 79.5 68 H79 Z"/>
+    <path d="M53 30 H53.5 A2.5 2.5 0 0 1 56 32.5 V69.5 A2.5 2.5 0 0 1 53.5 72 H53 Z"/>
+    <path d="M66 30 H66.5 A2.5 2.5 0 0 1 69 32.5 V69.5 A2.5 2.5 0 0 1 66.5 72 H66 Z"/>
+    <path d="M79 30 H79.5 A2.5 2.5 0 0 1 82 32.5 V69.5 A2.5 2.5 0 0 1 79.5 72 H79 Z"/>
   </g>
   <g fill="#fbf3dc" stroke="#3b2a10" stroke-width="3">
-    <rect x="48" y="30" width="8" height="38" rx="2.5" fill="none"/>
-    <rect x="61" y="30" width="8" height="38" rx="2.5" fill="none"/>
-    <rect x="74" y="30" width="8" height="38" rx="2.5" fill="none"/>
+    <rect x="48" y="30" width="8" height="42" rx="2.5" fill="none"/>
+    <rect x="61" y="30" width="8" height="42" rx="2.5" fill="none"/>
+    <rect x="74" y="30" width="8" height="42" rx="2.5" fill="none"/>
     <ellipse cx="52" cy="15" rx="5" ry="3.5"/>
     <ellipse cx="65" cy="15" rx="5" ry="3.5"/>
     <ellipse cx="78" cy="15" rx="5" ry="3.5"/>

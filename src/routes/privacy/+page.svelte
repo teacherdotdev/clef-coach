@@ -32,9 +32,7 @@
 		</p>
 		<p>
 			Questions or concerns? Email
-			<a href="mailto:support@teacher.dev?subject=clefcoach%20privacy"
-				>support@teacher.dev</a
-			>.
+			<a href="mailto:support@teacher.dev?subject=clefcoach%20privacy">support@teacher.dev</a>.
 		</p>
 	</section>
 </div>

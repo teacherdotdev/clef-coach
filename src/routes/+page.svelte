@@ -1,7 +1,23 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { resolve } from '$app/paths';
+	import {
+		ALL_BAND_INSTRUMENTS,
+		ALL_CONCERT_KEYS,
+		ALL_LEVELS,
+		BAND_INSTRUMENTS,
+		bandRange,
+		chartRange,
+		CONCERT_KEY_NAMES,
+		LEVEL_NAMES,
+		writtenKey,
+		type BandInstrument
+	} from '$lib/band';
+	import { instrumentArt } from '$lib/instrumentArt';
+	import { ALL_PIANO_CLEFS, PIANO_CLEF_NAMES } from '$lib/piano';
 	import {
 		ALL_KEYS,
+		STRING_KEYS,
 		CLEF_NAMES,
 		KEY_NAMES,
 		parseNoteName,
@@ -9,8 +25,12 @@
 		type NoteValue
 	} from '$lib/music';
 	import {
+		ACTIVITY_TYPE_NAMES,
+		ALL_ACTIVITY_TYPES,
+		applyActivityType,
 		applyInstrument,
 		applyPositionSystem,
+		MAX_TITLE_LENGTH,
 		clampRange,
 		DEFAULT_SETTINGS,
 		fingeringOptions,
@@ -20,6 +40,7 @@
 		settingsFromJson,
 		settingsToQuery,
 		usesPositions,
+		type ActivityType,
 		type Settings
 	} from '$lib/settings';
 	import {
@@ -114,6 +135,42 @@
 		if (next.every((f) => f === 'open')) return;
 		settings = clampRange({ ...settings, fingers: next });
 	}
+
+	function selectActivity(choice: ActivityType) {
+		settings = applyActivityType(settings, choice);
+	}
+
+	// Band instruments the student may pick from. Keep at least one.
+	function toggleBandInstrument(inst: BandInstrument) {
+		const has = settings.bandInstruments.includes(inst);
+		const next = ALL_BAND_INSTRUMENTS.filter((i) =>
+			i === inst ? !has : settings.bandInstruments.includes(i)
+		);
+		if (next.length) settings.bandInstruments = next;
+	}
+
+	// The instrument whose range the teacher is adjusting, if any.
+	let adjusting = $state<BandInstrument | null>(null);
+	const adjustingRange = $derived(
+		adjusting ? bandRange(adjusting, settings.level, settings.rangeOverrides[adjusting]) : null
+	);
+
+	function setOverride(inst: BandInstrument, low: string, high: string) {
+		const level = BAND_INSTRUMENTS[inst].levels[settings.level];
+		const rest = { ...settings.rangeOverrides };
+		delete rest[inst];
+		// Back on the level's own range is no override at all.
+		settings.rangeOverrides =
+			level.low === low && level.high === high ? rest : { ...rest, [inst]: { low, high } };
+	}
+
+	function clearOverride(inst: BandInstrument) {
+		const rest = { ...settings.rangeOverrides };
+		delete rest[inst];
+		settings.rangeOverrides = rest;
+	}
+
+	const overridden = $derived(ALL_BAND_INSTRUMENTS.filter((i) => settings.rangeOverrides[i]));
 
 	// Both limits are optional: a blank or zero box means "no limit".
 	const MAX_MINUTES = MAX_SECONDS / 60;
@@ -386,11 +443,169 @@
 		const url = URL.createObjectURL(await qrPng(qr));
 		const a = document.createElement('a');
 		a.href = url;
-		a.download = `${settings.instrument}-practice-qr.png`;
+		const name = settings.activity === 'strings' ? settings.instrument : settings.activity;
+		a.download = `${name}-practice-qr.png`;
 		a.click();
 		URL.revokeObjectURL(url);
 	}
 </script>
+
+{#snippet levelChips()}
+	<fieldset>
+		<legend>Level</legend>
+		<p class="hint">How far into the instrument's range the notes reach.</p>
+		<div class="chips">
+			{#each ALL_LEVELS as choice (choice)}
+				<button
+					type="button"
+					class="chip"
+					class:on={settings.level === choice}
+					onclick={() => (settings.level = choice)}>{LEVEL_NAMES[choice]}</button
+				>
+			{/each}
+		</div>
+		{#if settings.activity === 'band' && settings.level === 'beginner'}
+			<p class="hint after">Beginner is the first five notes: concert B♭, C, D, E♭ and F.</p>
+		{/if}
+	</fieldset>
+{/snippet}
+
+{#snippet askName(what: string)}
+	<fieldset>
+		<legend>Ask for</legend>
+		<p class="hint">Students answer each selected item in order.</p>
+		<div class="chips">
+			<button
+				type="button"
+				class="chip"
+				class:on={settings.askName}
+				onclick={() => (settings.askName = !settings.askName)}>Note name</button
+			>
+			<span class="chip on locked">{what}</span>
+		</div>
+	</fieldset>
+{/snippet}
+
+{#snippet bandSettings()}
+	<fieldset>
+		<legend>Concert key</legend>
+		<p class="hint">Each instrument reads it in its own key — concert B♭ is C on trumpet.</p>
+		<div class="chips">
+			{#each ALL_CONCERT_KEYS as choice (choice)}
+				<button
+					type="button"
+					class="chip"
+					class:on={settings.concertKey === choice}
+					onclick={() => (settings.concertKey = choice)}>{CONCERT_KEY_NAMES[choice]}</button
+				>
+			{/each}
+		</div>
+		<label class="switch"
+			><input type="checkbox" bind:checked={settings.accidentals} /> Accidentals — write sharps, flats
+			and naturals on some notes, on top of the key signature</label
+		>
+	</fieldset>
+
+	{@render levelChips()}
+
+	<fieldset>
+		<legend>Instruments</legend>
+		<p class="hint">
+			Students pick from these. Untick some for a sectional. Every fingering accepted is on the
+			<a href={resolve('/chart')} target="_blank" rel="noopener">fingering charts</a>.
+		</p>
+		<div class="instruments">
+			{#each ALL_BAND_INSTRUMENTS as inst (inst)}
+				{@const range = bandRange(inst, settings.level, settings.rangeOverrides[inst])}
+				<div class="instrument" class:off={!settings.bandInstruments.includes(inst)}>
+					<label class="pick">
+						<input
+							type="checkbox"
+							checked={settings.bandInstruments.includes(inst)}
+							onchange={() => toggleBandInstrument(inst)}
+						/>
+						<img src={instrumentArt(inst)} alt="" />
+						<span class="instname">{BAND_INSTRUMENTS[inst].name}</span>
+					</label>
+					<span class="instrange">
+						{KEY_NAMES[writtenKey(settings.concertKey, inst)]} · {range.low}–{range.high}
+						{#if settings.rangeOverrides[inst]}<span class="custom">custom</span>{/if}
+					</span>
+					<button
+						type="button"
+						class="linkbtn"
+						aria-expanded={adjusting === inst}
+						onclick={() => (adjusting = adjusting === inst ? null : inst)}
+						>{adjusting === inst ? 'Done' : 'Adjust range'}</button
+					>
+				</div>
+				{#if adjusting === inst && adjustingRange}
+					<div class="adjust">
+						<RangeSelector
+							clef={BAND_INSTRUMENTS[inst].clef}
+							keySig={writtenKey(settings.concertKey, inst)}
+							low={adjustingRange.low}
+							high={adjustingRange.high}
+							minNote={chartRange(inst).low}
+							maxNote={chartRange(inst).high}
+							onchange={(low, high) => setOverride(inst, low, high)}
+						/>
+						{#if settings.rangeOverrides[inst]}
+							<button type="button" class="linkbtn" onclick={() => clearOverride(inst)}
+								>Back to the {LEVEL_NAMES[settings.level]} range</button
+							>
+						{/if}
+					</div>
+				{/if}
+			{/each}
+		</div>
+		{#if overridden.length}
+			<p class="hint after">
+				Custom ranges: {overridden.map((i) => BAND_INSTRUMENTS[i].name).join(', ')}. The others
+				follow the level.
+			</p>
+		{/if}
+	</fieldset>
+
+	{@render askName('Fingering')}
+{/snippet}
+
+{#snippet pianoSettings()}
+	<fieldset>
+		<legend>Clef</legend>
+		<div class="chips">
+			{#each ALL_PIANO_CLEFS as choice (choice)}
+				<button
+					type="button"
+					class="chip"
+					class:on={settings.pianoClefs === choice}
+					onclick={() => (settings.pianoClefs = choice)}>{PIANO_CLEF_NAMES[choice]}</button
+				>
+			{/each}
+		</div>
+	</fieldset>
+
+	<fieldset>
+		<legend>Key signature</legend>
+		<div class="chips">
+			{#each ALL_KEYS as choice (choice)}
+				<button
+					type="button"
+					class="chip"
+					class:on={settings.key === choice}
+					onclick={() => (settings.key = choice)}>{KEY_NAMES[choice]}</button
+				>
+			{/each}
+		</div>
+		<label class="switch"
+			><input type="checkbox" bind:checked={settings.accidentals} /> Accidentals — write sharps, flats
+			and naturals on some notes, on top of the key signature</label
+		>
+	</fieldset>
+
+	{@render levelChips()}
+	{@render askName('Key')}
+{/snippet}
 
 {#snippet icon(d: string)}
 	<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path {d} /></svg>
@@ -400,163 +615,194 @@
 	<header class="intro">
 		<p class="brand"><img src={logo} alt="" width="30" height="30" /> Clef Coach</p>
 		<h1>Notes &amp; Fingering Practice</h1>
-		<p>Choose an instrument and settings, then share the link with students.</p>
+		<p>Choose an activity and its settings, then share the link with students.</p>
 	</header>
 
 	<div class="layout">
 		<section class="panel settings" aria-label="Settings">
 			<fieldset>
-				<legend>Instrument</legend>
-				<p class="hint">Choose an instrument for this activity.</p>
+				<legend>Activity</legend>
 				<div class="chips">
-					{#each ALL_INSTRUMENTS as choice (choice)}
+					{#each ALL_ACTIVITY_TYPES as choice (choice)}
 						<button
 							type="button"
-							class="chip clef-chip"
-							class:on={settings.instrument === choice}
-							onclick={() => selectInstrument(choice)}
+							class="chip"
+							class:on={settings.activity === choice}
+							onclick={() => selectActivity(choice)}>{ACTIVITY_TYPE_NAMES[choice]}</button
 						>
-							<span class="clef-preview" aria-hidden="true"
-								><Staff clef={INSTRUMENTS[choice].clef} /></span
-							>
-							<span>{INSTRUMENT_NAMES[choice]}</span>
-						</button>
 					{/each}
 				</div>
 				<p class="hint after">
-					Reads {CLEF_NAMES[settings.clefs[0]].toLowerCase()} clef; strings tuned {INSTRUMENTS[
-						settings.instrument
-					].strings
-						.map((s) => s.replace(/\d+$/, ''))
-						.join(' ')}.
-				</p>
-			</fieldset>
-
-			<fieldset>
-				<legend>Key signature</legend>
-				<p class="hint">Choose the key shown on the staff.</p>
-				<div class="chips">
-					{#each ALL_KEYS as choice (choice)}
-						<button
-							type="button"
-							class="chip"
-							class:on={settings.key === choice}
-							onclick={() => selectKey(choice)}>{KEY_NAMES[choice]}</button
-						>
-					{/each}
-				</div>
-				<label class="switch"
-					><input type="checkbox" bind:checked={settings.accidentals} /> Accidentals — write sharps, flats
-					and naturals on some notes, on top of the key signature</label
-				>
-			</fieldset>
-
-			<fieldset>
-				<legend>Ask for</legend>
-				<p class="hint">
-					Students answer each selected item in order. All valid fingerings are accepted.
-				</p>
-				<div class="chips">
-					<span class="chip on locked">Note</span>
-					<button
-						type="button"
-						class="chip"
-						class:on={settings.askString}
-						onclick={() => (settings.askString = !settings.askString)}>String</button
-					>
-					{#if usesPositions(settings)}
-						<button
-							type="button"
-							class="chip"
-							class:on={settings.askPosition}
-							onclick={() => (settings.askPosition = !settings.askPosition)}>Position</button
-						>
+					{#if settings.activity === 'band'}
+						One link for the whole band: each student picks their instrument and reads in their own
+						key.
+					{:else if settings.activity === 'piano'}
+						Students read the note and click its key on a piano keyboard.
+					{:else}
+						Violin, viola, cello or bass: name the note, then the string and finger.
 					{/if}
-					<button
-						type="button"
-						class="chip"
-						class:on={settings.askFinger}
-						onclick={() => (settings.askFinger = !settings.askFinger)}>Finger</button
-					>
-				</div>
+				</p>
 			</fieldset>
 
-			{#if usesPositions(settings)}
+			{#if settings.activity === 'strings'}
 				<fieldset>
-					<legend>Position system</legend>
-					<p class="hint">Choose how bass positions are named.</p>
+					<legend>Instrument</legend>
+					<p class="hint">Choose an instrument for this activity.</p>
 					<div class="chips">
-						{#each ALL_POSITION_SYSTEMS as choice (choice)}
+						{#each ALL_INSTRUMENTS as choice (choice)}
 							<button
 								type="button"
-								class="chip"
-								class:on={settings.positionSystem === choice}
-								onclick={() => selectPositionSystem(choice)}>{POSITION_SYSTEM_NAMES[choice]}</button
+								class="chip clef-chip"
+								class:on={settings.instrument === choice}
+								onclick={() => selectInstrument(choice)}
 							>
+								<span class="clef-preview" aria-hidden="true"
+									><Staff clef={INSTRUMENTS[choice].clef} /></span
+								>
+								<span>{INSTRUMENT_NAMES[choice]}</span>
+							</button>
 						{/each}
 					</div>
+					<p class="hint after">
+						Reads {CLEF_NAMES[settings.clefs[0]].toLowerCase()} clef; strings tuned {INSTRUMENTS[
+							settings.instrument
+						].strings
+							.map((s) => s.replace(/\d+$/, ''))
+							.join(' ')}.
+					</p>
 				</fieldset>
 
 				<fieldset>
-					<legend>Positions</legend>
-					<p class="hint">Choose which positions the fingerings may use.</p>
+					<legend>Key signature</legend>
+					<p class="hint">Choose the key shown on the staff.</p>
 					<div class="chips">
-						{#each SYSTEM_POSITIONS[settings.positionSystem] as id (id)}
+						{#each STRING_KEYS as choice (choice)}
 							<button
 								type="button"
 								class="chip"
-								class:on={settings.bassPositions.includes(id)}
-								onclick={() => toggleBassPosition(id)}
-								>{positionName(id, settings.positionSystem)} ({positionLabel(
-									id,
-									settings.positionSystem
-								)})</button
+								class:on={settings.key === choice}
+								onclick={() => selectKey(choice)}>{KEY_NAMES[choice]}</button
 							>
 						{/each}
 					</div>
+					<label class="switch"
+						><input type="checkbox" bind:checked={settings.accidentals} /> Accidentals — write sharps,
+						flats and naturals on some notes, on top of the key signature</label
+					>
 				</fieldset>
-			{/if}
 
-			<fieldset>
-				<legend>Fingerings</legend>
-				<p class="hint">Choose which fingerings to include.</p>
-				<div class="chips">
-					{#each FINGER_SETS[settings.instrument] as id (id)}
-						{#if id === 'open'}
-							<span class="chip on locked">Open</span>
-						{:else}
+				<fieldset>
+					<legend>Ask for</legend>
+					<p class="hint">
+						Students answer each selected item in order. All valid fingerings are accepted.
+					</p>
+					<div class="chips">
+						<span class="chip on locked">Note</span>
+						<button
+							type="button"
+							class="chip"
+							class:on={settings.askString}
+							onclick={() => (settings.askString = !settings.askString)}>String</button
+						>
+						{#if usesPositions(settings)}
 							<button
 								type="button"
 								class="chip"
-								class:on={settings.fingers.includes(id)}
-								onclick={() => toggleFinger(id)}
-								title={FINGERS[id].name}>{FINGERS[id].label}</button
+								class:on={settings.askPosition}
+								onclick={() => (settings.askPosition = !settings.askPosition)}>Position</button
 							>
 						{/if}
-					{/each}
-				</div>
-			</fieldset>
+						<button
+							type="button"
+							class="chip"
+							class:on={settings.askFinger}
+							onclick={() => (settings.askFinger = !settings.askFinger)}>Finger</button
+						>
+					</div>
+				</fieldset>
 
-			<fieldset>
-				<legend>Range</legend>
-				<RangeSelector
-					clef={settings.clefs[0]}
-					keySig={settings.key}
-					low={settings.rangeLow}
-					high={settings.rangeHigh}
-					minNote={limits.low}
-					maxNote={limits.high}
-					onchange={(low, high) => {
-						settings.rangeLow = low;
-						settings.rangeHigh = high;
-					}}
-				/>
-				<p class="hint after">
-					Available range: {limits.low}–{limits.high}. {available} playable note{available === 1
-						? ''
-						: 's'} selected.
-				</p>
-			</fieldset>
+				{#if usesPositions(settings)}
+					<fieldset>
+						<legend>Position system</legend>
+						<p class="hint">Choose how bass positions are named.</p>
+						<div class="chips">
+							{#each ALL_POSITION_SYSTEMS as choice (choice)}
+								<button
+									type="button"
+									class="chip"
+									class:on={settings.positionSystem === choice}
+									onclick={() => selectPositionSystem(choice)}
+									>{POSITION_SYSTEM_NAMES[choice]}</button
+								>
+							{/each}
+						</div>
+					</fieldset>
+
+					<fieldset>
+						<legend>Positions</legend>
+						<p class="hint">Choose which positions the fingerings may use.</p>
+						<div class="chips">
+							{#each SYSTEM_POSITIONS[settings.positionSystem] as id (id)}
+								<button
+									type="button"
+									class="chip"
+									class:on={settings.bassPositions.includes(id)}
+									onclick={() => toggleBassPosition(id)}
+									>{positionName(id, settings.positionSystem)} ({positionLabel(
+										id,
+										settings.positionSystem
+									)})</button
+								>
+							{/each}
+						</div>
+					</fieldset>
+				{/if}
+
+				<fieldset>
+					<legend>Fingerings</legend>
+					<p class="hint">Choose which fingerings to include.</p>
+					<div class="chips">
+						{#each FINGER_SETS[settings.instrument] as id (id)}
+							{#if id === 'open'}
+								<span class="chip on locked">Open</span>
+							{:else}
+								<button
+									type="button"
+									class="chip"
+									class:on={settings.fingers.includes(id)}
+									onclick={() => toggleFinger(id)}
+									title={FINGERS[id].name}>{FINGERS[id].label}</button
+								>
+							{/if}
+						{/each}
+					</div>
+				</fieldset>
+
+				<fieldset>
+					<legend>Range</legend>
+					<RangeSelector
+						clef={settings.clefs[0]}
+						keySig={settings.key}
+						low={settings.rangeLow}
+						high={settings.rangeHigh}
+						minNote={limits.low}
+						maxNote={limits.high}
+						onchange={(low, high) => {
+							settings.rangeLow = low;
+							settings.rangeHigh = high;
+						}}
+					/>
+					<p class="hint after">
+						Available range: {limits.low}–{limits.high}. {available} playable note{available === 1
+							? ''
+							: 's'} selected.
+					</p>
+				</fieldset>
+			{:else if settings.activity === 'band'}
+				{@render bandSettings()}
+			{:else}
+				{@render pianoSettings()}
+			{/if}
 
 			<fieldset>
 				<legend>Lines &amp; spaces</legend>
@@ -656,6 +902,22 @@
 					><input type="checkbox" bind:checked={settings.detailedReport} /> Show detailed report — which
 					notes were missed, and how often</label
 				>
+			</fieldset>
+
+			<fieldset>
+				<legend>Homework</legend>
+				<p class="hint">
+					Give the activity a title to hand it out as an assignment. Students see it, and it is
+					printed on the PDF of their results they hand in.
+				</p>
+				<input
+					class="titleinput"
+					type="text"
+					maxlength={MAX_TITLE_LENGTH}
+					placeholder="e.g. Week 3 — first five notes"
+					aria-label="Assignment title"
+					bind:value={settings.title}
+				/>
 			</fieldset>
 		</section>
 
@@ -1078,6 +1340,80 @@
 	}
 	.chip:disabled:hover {
 		border-color: var(--border);
+	}
+	.instruments {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+	}
+	.instrument {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.25rem 0.75rem;
+		padding: 0.35rem 0.6rem;
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		background: #fff;
+	}
+	.instrument.off {
+		opacity: 0.6;
+	}
+	.pick {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex: 1 1 12rem;
+		cursor: pointer;
+		font-weight: 600;
+		font-size: 0.92rem;
+	}
+	.pick img {
+		width: 2.6rem;
+		height: 2rem;
+		object-fit: contain;
+	}
+	.instrange {
+		font-size: 0.8rem;
+		color: #555;
+		font-variant-numeric: tabular-nums;
+	}
+	.custom {
+		margin-left: 0.3rem;
+		padding: 0 0.35rem;
+		border-radius: 999px;
+		background: var(--blue-soft);
+		color: var(--blue-dark);
+		font-weight: 700;
+	}
+	.linkbtn {
+		border: none;
+		background: none;
+		padding: 0.2rem 0;
+		font: inherit;
+		font-size: 0.82rem;
+		font-weight: 600;
+		color: var(--blue-dark);
+		cursor: pointer;
+		text-decoration: underline;
+	}
+	.adjust {
+		padding: 0.5rem 0.75rem 0.75rem;
+		border: 1px dashed var(--blue-border);
+		border-radius: 10px;
+		background: #fff;
+	}
+	.titleinput {
+		width: 100%;
+		padding: 0.5rem 0.65rem;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		background: #fff;
+		font: inherit;
+	}
+	.titleinput:focus-visible {
+		outline: 2px solid var(--blue);
+		outline-offset: 1px;
 	}
 	.limits {
 		display: flex;

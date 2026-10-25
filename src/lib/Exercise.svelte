@@ -8,8 +8,16 @@
 	// on screen so the student sees the whole fingering come together. A wrong
 	// answer at any step ends the question there and shows what it should have
 	// been.
-	import { onDestroy, tick } from 'svelte';
+	//
+	// Band and piano questions end with the student playing the note on a
+	// drawing of their instrument instead. A wrong fingering stays on the drawing
+	// until they move on, since a fingering takes longer to take in than a word.
+	import { onDestroy, onMount, tick } from 'svelte';
+	import FingeringPicture from './FingeringPicture.svelte';
+	import PlayPad from './PlayPad.svelte';
 	import Staff from './Staff.svelte';
+	import { describeBandFingering, type BandInstrument } from './band';
+	import { bandPractice, keyboardSpan, pianoPractice, type Practice } from './practice';
 	import {
 		ACCIDENTAL_NAMES,
 		ACCIDENTAL_SYMBOLS,
@@ -19,6 +27,7 @@
 		noteLabel,
 		notesToAsk,
 		parseNoteName,
+		pitchInKey,
 		soundingAccidental,
 		writableAccidentals,
 		type Accidental,
@@ -48,7 +57,32 @@
 		type PositionId
 	} from './strings';
 
-	let { settings, title = 'Clef Coach' }: { settings: Settings; title?: string } = $props();
+	let {
+		settings,
+		title = 'Clef Coach',
+		bandInstrument = null
+	}: {
+		settings: Settings;
+		title?: string;
+		/** The instrument a band student picked. */
+		bandInstrument?: BandInstrument | null;
+	} = $props();
+
+	// What a band or piano student reads and plays; null for the strings, whose
+	// questions work from the settings directly.
+	const practice: Practice | null = $derived(
+		settings.activity === 'band' && bandInstrument
+			? bandPractice(settings, bandInstrument)
+			: settings.activity === 'piano'
+				? pianoPractice(settings)
+				: null
+	);
+	// The key every staff is drawn in and every note is read in.
+	const keySig = $derived(practice?.key ?? settings.key);
+	// The keys or bars a keyboard instrument draws.
+	const span = $derived(
+		practice ? keyboardSpan(practice.staves, practice.key) : { low: 48, high: 71 }
+	);
 
 	const LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
 
@@ -86,7 +120,7 @@
 		return items[Math.floor(Math.random() * items.length)];
 	}
 
-	type StepId = 'note' | 'accidental' | 'string' | 'finger' | 'position';
+	type StepId = 'note' | 'accidental' | 'string' | 'finger' | 'position' | 'play';
 	interface Given {
 		step: StepId;
 		label: string;
@@ -101,14 +135,28 @@
 	interface Ask {
 		index: number;
 		accidental: Accidental | null;
+		/** The staff it is read on — a piano reading both clefs has two. */
+		clef: Clef;
 	}
 
-	// The instrument decides the clef, so a run only ever reads in one of them.
+	// A string instrument decides the clef, so a run only ever reads in one of
+	// them. A piano may read in two.
 	const clef = $derived(settings.clefs[0]);
 
-	// Every note this activity can ask about, low to high.
-	const pool = $derived(
-		notesToAsk({
+	// Every note this activity can ask about, low to high, with the staff it is
+	// read on.
+	const pool = $derived.by((): { index: number; clef: Clef }[] => {
+		if (practice)
+			return practice.staves.flatMap((st) =>
+				notesToAsk({
+					clef: st.clef,
+					lowIndex: st.low,
+					highIndex: st.high,
+					position: settings.positions,
+					playable: (i) => practice!.plays(i).length > 0
+				}).map((index) => ({ index, clef: st.clef }))
+			);
+		return notesToAsk({
 			clef,
 			lowIndex,
 			highIndex,
@@ -116,8 +164,8 @@
 			// Restricting the fingerings can leave notes inside the range with no
 			// way to play them; don't ask about those.
 			playable: asksFingering(settings) ? (i) => optionsFor(i).length > 0 : undefined
-		})
-	);
+		}).map((index) => ({ index, clef }));
+	});
 
 	// --- what to ask next ---
 	//
@@ -151,14 +199,16 @@
 	// half the notes keep a sign when accidentals are on, so the student still
 	// has to read the key signature for the rest. A sign that would put the note
 	// out of reach of the fingerings being taught is not offered.
-	function ask(index: number): Ask {
-		if (!settings.accidentals) return { index, accidental: null };
+	function ask({ index, clef }: { index: number; clef: Clef }): Ask {
+		if (!settings.accidentals) return { index, clef, accidental: null };
 		const { letter } = fromDiatonicIndex(index);
-		const signs = writableAccidentals(settings.key, letter).filter(
-			(a) => !asksFingering(settings) || optionsFor(index, a).length > 0
+		const signs = writableAccidentals(keySig, letter).filter((a) =>
+			practice
+				? practice.plays(index, a).length > 0
+				: !asksFingering(settings) || optionsFor(index, a).length > 0
 		);
-		if (!signs.length || Math.random() < 0.5) return { index, accidental: null };
-		return { index, accidental: pick(signs) };
+		if (!signs.length || Math.random() < 0.5) return { index, clef, accidental: null };
+		return { index, clef, accidental: pick(signs) };
 	}
 
 	// Fisher–Yates: each order is as likely as any other.
@@ -172,16 +222,31 @@
 	}
 
 	function newQuestion(): { clef: Clef; note: Note; index: number } {
-		const { index, accidental } = nextAsk();
+		const { index, accidental, clef } = nextAsk();
 		return { clef, note: noteAt(index, settings.noteValues, accidental), index };
+	}
+
+	// Band and piano students may go straight to playing.
+	function firstStep(): StepId {
+		return practice && !practice.askName ? 'play' : 'note';
+	}
+
+	/** Every right way to play the note being asked, the first-taught first. */
+	function playsFor(q: { index: number; note: Note }): string[] {
+		return practice ? practice.plays(q.index, q.note.accidental ?? null) : [];
 	}
 
 	// --- run state ---
 	let phase = $state<'ready' | 'running' | 'done'>(isChallengeMode(settings) ? 'ready' : 'running');
 	let current = $state(newQuestion());
-	let step = $state<StepId>('note');
+	let step = $state<StepId>(firstStep());
 	// Every fingering still consistent with what the student has answered so far.
 	let options = $state<Fingering[]>(optionsFor(current.index, current.note.accidental));
+	// A band or piano note's right answers, and — after a wrong one — what was
+	// played against what was right, shown on the drawing until Next.
+	let plays = $state<string[]>(playsFor(current));
+	let reveal = $state<{ gave: string; want: string } | null>(null);
+	let pad = $state<PlayPad>();
 	/** The sign in front of the note being asked, if there is one. */
 	const written = $derived(current.note.accidental ?? null);
 	let given = $state<Given[]>([]);
@@ -202,6 +267,8 @@
 		step: StepId;
 		gave: string;
 		want: string;
+		/** A wrong fingering as played and as it should have been, for drawing. */
+		played?: { gave: string; want: string };
 	}
 
 	/** How one note fared over the run, for the report at the end. */
@@ -209,6 +276,7 @@
 		/** The note as it was asked, so the report can draw it back. */
 		index: number;
 		accidental: Accidental | null;
+		clef: Clef;
 		asked: number;
 		/** Questions with at least one wrong answer in them. */
 		wrong: number;
@@ -250,9 +318,12 @@
 		given = [];
 		locked = false;
 		wrongAnswers = [];
-		step = 'note';
+		reveal = null;
 		current = newQuestion();
+		step = firstStep();
 		options = optionsFor(current.index, current.note.accidental);
+		plays = playsFor(current);
+		pad?.reset();
 	}
 
 	// Which step follows this one. With accidentals on, the letter is followed by
@@ -260,6 +331,7 @@
 	// position is what tells you where the finger goes.
 	function stepAfter(from: StepId): StepId | null {
 		if (from === 'note' && settings.accidentals) return 'accidental';
+		if (practice) return from === 'play' ? null : 'play';
 		if (from === 'note' || from === 'accidental')
 			return settings.askString ? 'string' : fingeringStep();
 		if (from === 'string') return fingeringStep();
@@ -295,7 +367,7 @@
 		// A note the student stumbled over on the way through the range comes back
 		// once the sweep is done — whichever part of it they got wrong.
 		if (wrongAnswers.length && sweeping)
-			missed = [...missed, { index: current.index, accidental: written }];
+			missed = [...missed, { index: current.index, accidental: written, clef: current.clef }];
 		completed += 1;
 		if (settings.questionLimit > 0 && completed >= settings.questionLimit) {
 			finish();
@@ -307,10 +379,11 @@
 	// Add the question just finished to the note's running record. The same slip
 	// made twice is one line in the report with a count, not two lines.
 	function recordNote() {
-		const key = written ? `${current.index}:${written}` : String(current.index);
+		const key = `${current.clef}:${current.index}:${written ?? ''}`;
 		const note = (tally[key] ??= {
 			index: current.index,
 			accidental: written,
+			clef: current.clef,
 			asked: 0,
 			wrong: 0,
 			misses: []
@@ -329,6 +402,7 @@
 
 	// The buttons for the step being asked.
 	const choices = $derived.by((): { key: string; label: string }[] => {
+		if (step === 'play') return [];
 		if (step === 'note') return LETTERS.map((l) => ({ key: l, label: chipLabel(l) }));
 		if (step === 'accidental')
 			return ALL_ACCIDENTALS.map((a) => ({
@@ -356,7 +430,7 @@
 
 	// The sign asked for is what the note comes out as, key signature included:
 	// F in D major is sharp whether or not a sharp is written in front of it.
-	const sounding = $derived(soundingAccidental(settings.key, current.note.letter, written));
+	const sounding = $derived(soundingAccidental(keySig, current.note.letter, written));
 
 	function isRight(key: string): boolean {
 		if (step === 'note') return key === current.note.letter;
@@ -377,7 +451,8 @@
 
 	function chipLabel(key: string, asked: StepId = step): string {
 		// With accidentals on the sign is asked on its own, so the letter stays bare.
-		if (asked === 'note') return settings.accidentals ? key : noteLabel(settings.key, key);
+		if (asked === 'note') return settings.accidentals ? key : noteLabel(keySig, key);
+		if (asked === 'play') return playedLabel(key);
 		if (asked === 'accidental') return ACCIDENTAL_NAMES[key as Accidental];
 		if (asked === 'string') return `${def.strings[Number(key)].replace(/\d+$/, '')} string`;
 		if (asked === 'finger') return key === 'open' ? 'Open' : `Finger ${FINGERS[key].label}`;
@@ -393,8 +468,9 @@
 	function rightLabel(asked: StepId, from: Fingering[]): string {
 		// A miss on the letter ends the question before the sign is asked, so the
 		// right answer is given in full: "B♭", not "B".
-		if (asked === 'note') return noteLabel(settings.key, current.note.letter, written);
+		if (asked === 'note') return noteLabel(keySig, current.note.letter, written);
 		if (asked === 'accidental') return chipLabel(sounding, asked);
+		if (asked === 'play') return playedLabel(plays[0] ?? '');
 		const f = preferredFingering(from);
 		if (!f) return '';
 		if (asked === 'string') return chipLabel(String(f.string), asked);
@@ -402,22 +478,50 @@
 		return chipLabel(f.position ?? 'open', asked);
 	}
 
+	/** A fingering in words: "valves 1 and 2", "6th position", "the B♭4 key". */
+	function playedLabel(answer: string): string {
+		if (!practice?.instrument || practice.controls === 'bars') return `the ${keyName(answer)} key`;
+		return describeBandFingering(practice.instrument, answer);
+	}
+
+	const KEY_NAMES = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
+	function keyName(answer: string): string {
+		const p = Number(answer);
+		// The note being asked keeps its own spelling: B♭, not A♯.
+		if (p === pitchInKey(current.index, keySig, written))
+			return `${noteLabel(keySig, current.note.letter, written)}${current.note.octave}`;
+		return `${KEY_NAMES[((p % 12) + 12) % 12]}${Math.floor(p / 12)}`;
+	}
+
+	const playPrompt = $derived(
+		practice?.controls === 'slide'
+			? 'Move the slide, then press Play'
+			: practice?.controls === 'valves' || practice?.controls === 'horn'
+				? 'Press the valves, then press Play'
+				: practice?.controls === 'bars'
+					? 'Strike the bar for this note'
+					: 'Click the key for this note'
+	);
+
 	const promptText = $derived(
-		step === 'note'
-			? 'Name this note'
-			: step === 'accidental'
-				? 'Sharp, natural, or flat?'
-				: step === 'string'
-					? 'Which string?'
-					: step === 'finger'
-						? 'Which finger?'
-						: 'Which position?'
+		step === 'play'
+			? playPrompt
+			: step === 'note'
+				? 'Name this note'
+				: step === 'accidental'
+					? 'Sharp, natural, or flat?'
+					: step === 'string'
+						? 'Which string?'
+						: step === 'finger'
+							? 'Which finger?'
+							: 'Which position?'
 	);
 
 	// After a wrong answer `options` holds just the fingering a teacher would
 	// have written in, so it doubles as the answer key for the reveal.
 	const revealText = $derived.by(() => {
-		if (step === 'note') return `It was ${noteLabel(settings.key, current.note.letter, written)}`;
+		if (step === 'note') return `It was ${noteLabel(keySig, current.note.letter, written)}`;
+		if (step === 'play') return reveal ? `It was ${playedLabel(reveal.want)}` : '';
 		if (step === 'accidental')
 			return `It was ${current.note.letter}${ACCIDENTAL_SYMBOLS[sounding]}`;
 		const f = options[0];
@@ -461,6 +565,48 @@
 		revealTimer = setTimeout(completeQuestion, REVEAL_MS);
 	}
 
+	// Playing the note: right moves on as any step does; wrong shows the right
+	// fingering on the drawing and waits for Next.
+	function playNote(answer: string) {
+		if (locked || phase !== 'running' || step !== 'play') return;
+		attempted += 1;
+		const label = playedLabel(answer);
+		if (plays.includes(answer)) {
+			correct += 1;
+			given = [...given, { step, label, ok: true }];
+			locked = true;
+			revealTimer = setTimeout(advance, CORRECT_MS);
+			return;
+		}
+		given = [...given, { step, label, ok: false }];
+		wrongKeys = [answer];
+		wrongAnswers = [
+			...wrongAnswers,
+			{
+				step,
+				gave: label,
+				want: rightLabel(step, options),
+				played: { gave: answer, want: plays[0] ?? '' }
+			}
+		];
+		reveal = { gave: answer, want: plays[0] ?? '' };
+		locked = true;
+	}
+
+	function next() {
+		if (reveal && phase === 'running') completeQuestion();
+	}
+
+	// Space or Enter moves on from a wrong fingering, so a student playing from
+	// the keyboard never has to reach for the mouse.
+	function nextKey(event: KeyboardEvent) {
+		if (!reveal || (event.key !== ' ' && event.key !== 'Enter')) return;
+		const el = event.target as HTMLElement | null;
+		if (el?.closest('button, input, textarea')) return;
+		event.preventDefault();
+		next();
+	}
+
 	function finish() {
 		clearInterval(ticker);
 		clearTimeout(revealTimer);
@@ -474,7 +620,7 @@
 
 	// The steps in the order they are asked, so a note's wrong answers read in
 	// the order the student met them.
-	const ORDERED_STEPS: StepId[] = ['note', 'accidental', 'string', 'position', 'finger'];
+	const ORDERED_STEPS: StepId[] = ['note', 'accidental', 'string', 'position', 'finger', 'play'];
 
 	/**
 	 * The notes that went wrong, the ones missed most often first. This is the
@@ -505,7 +651,9 @@
 
 	function recordHighScore() {
 		const pct = attempted ? correct / attempted : 0;
-		const key = 'noteid:hs:' + settingsToQuery(settings);
+		// A band student's best is their own instrument's.
+		const key =
+			'noteid:hs:' + settingsToQuery(settings) + (bandInstrument ? `#${bandInstrument}` : '');
 		try {
 			const prev = Number(localStorage.getItem(key));
 			if (!Number.isFinite(prev) || pct > prev) {
@@ -543,6 +691,29 @@
 		document.title = pageTitle;
 	}
 
+	// --- score display ---
+	//
+	// Some students find a running score stressful, so they can hide it. It is
+	// theirs to choose and is remembered on their device; the saved PDF still
+	// carries the score for the teacher.
+	const SHOW_SCORE_KEY = 'noteid:showscore';
+	let showScore = $state(true);
+	onMount(() => {
+		try {
+			showScore = localStorage.getItem(SHOW_SCORE_KEY) !== '0';
+		} catch {
+			showScore = true;
+		}
+	});
+	function toggleScore() {
+		showScore = !showScore;
+		try {
+			localStorage.setItem(SHOW_SCORE_KEY, showScore ? '1' : '0');
+		} catch {
+			// Still hidden for this run; just not remembered.
+		}
+	}
+
 	onDestroy(() => {
 		clearInterval(ticker);
 		clearTimeout(revealTimer);
@@ -556,9 +727,42 @@
 	}
 </script>
 
+<svelte:window onkeydown={nextKey} />
+
+<!-- The staff, or for a piano reading both clefs the grand staff, with the
+     note on whichever of the two it belongs to. -->
+{#snippet reading()}
+	{#if practice && practice.staves.length > 1}
+		<div class="grand">
+			{#each practice.staves as st (st.clef)}
+				<Staff
+					clef={st.clef}
+					{keySig}
+					helpers={settings.helpers}
+					helperLow={st.low}
+					helperHigh={st.high}
+					note={st.clef === current.clef ? current.note : null}
+				/>
+			{/each}
+		</div>
+	{:else}
+		<Staff
+			clef={current.clef}
+			{keySig}
+			helpers={settings.helpers}
+			helperLow={practice ? practice.staves[0].low : lowIndex}
+			helperHigh={practice ? practice.staves[0].high : highIndex}
+			note={current.note}
+		/>
+	{/if}
+{/snippet}
+
 <div class="exercise">
 	{#if phase === 'ready'}
 		<div class="gate">
+			{#if settings.title}
+				<p class="assignment">{settings.title}</p>
+			{/if}
 			<h2>Ready to start</h2>
 			<p class="gate-sub">
 				{#if settings.questionLimit > 0 && settings.timeLimitSec > 0}
@@ -571,22 +775,23 @@
 				{/if}
 			</p>
 			<div class="staff-wrap muted">
-				<Staff
-					clef={current.clef}
-					keySig={settings.key}
-					helpers={settings.helpers}
-					helperLow={lowIndex}
-					helperHigh={highIndex}
-					note={current.note}
-				/>
+				{@render reading()}
 			</div>
+			<label class="score-choice">
+				<input type="checkbox" checked={showScore} onchange={toggleScore} /> Show my score
+			</label>
 			<button type="button" class="btn-primary big" onclick={start}>Start Challenge</button>
 		</div>
 	{:else if phase === 'running'}
 		<div class="statusbar">
 			<div class="score">
-				<strong>{correct}/{attempted}</strong>
-				<span class="pct">{percent}%</span>
+				{#if showScore}
+					<strong>{correct}/{attempted}</strong>
+					<span class="pct">{percent}%</span>
+				{/if}
+				<button type="button" class="score-toggle" onclick={toggleScore}>
+					{showScore ? 'Hide score' : 'Show score'}
+				</button>
 			</div>
 			<div class="progress">
 				{#if settings.questionLimit > 0}
@@ -601,14 +806,7 @@
 		</div>
 
 		<div class="staff-wrap">
-			<Staff
-				clef={current.clef}
-				keySig={settings.key}
-				helpers={settings.helpers}
-				helperLow={lowIndex}
-				helperHigh={highIndex}
-				note={current.note}
-			/>
+			{@render reading()}
 		</div>
 
 		{#if given.length}
@@ -633,6 +831,23 @@
 				<p>{promptText}</p>
 			{/if}
 		</div>
+
+		{#if step === 'play' && practice}
+			<PlayPad
+				bind:this={pad}
+				controls={practice.controls}
+				instrument={practice.instrument}
+				{span}
+				{reveal}
+				{locked}
+				onplay={playNote}
+			/>
+			{#if reveal}
+				<button type="button" class="btn-primary next" onclick={next}>
+					Next <span class="enter">Space</span>
+				</button>
+			{/if}
+		{/if}
 
 		<div class="letters" class:wide={step !== 'note'}>
 			{#each choices as c (c.key)}
@@ -659,39 +874,85 @@
 			<!-- Only on the saved PDF: who did it, what it was, and when. -->
 			<div class="print-only">
 				<p class="print-name">{studentName.trim()}</p>
+				{#if settings.title}
+					<p class="print-assignment">{settings.title}</p>
+				{/if}
 				<p>{title}</p>
 				<p>{finishedAt.toLocaleString()}</p>
+				<p>Finished: {completed} note{completed === 1 ? '' : 's'} in {formatTime(elapsedMs)}</p>
+				<!-- The teacher sees the score even when the student hid it. -->
+				{#if !showScore}
+					<p>Score: {correct}/{attempted} ({percent}% correct)</p>
+				{/if}
 			</div>
-			<h2 class:high={isHighScore}>{isHighScore ? 'New High Score!' : 'Challenge complete'}</h2>
-			<p class="bigscore">{correct}/{attempted}</p>
-			<p class="detail">{percent}% correct · {formatTime(elapsedMs)}</p>
+			{#if showScore}
+				<h2 class:high={isHighScore}>{isHighScore ? 'New High Score!' : 'Challenge complete'}</h2>
+				<p class="bigscore">{correct}/{attempted}</p>
+				<p class="detail">{percent}% correct · {formatTime(elapsedMs)}</p>
+			{:else}
+				<h2>All done!</h2>
+				<p class="detail no-print">
+					You played {completed} note{completed === 1 ? '' : 's'} in {formatTime(elapsedMs)}.
+				</p>
+			{/if}
 
-			{#if settings.detailedReport}
+			<!-- With the score hidden, the notes to work on are the feedback. -->
+			{#if settings.detailedReport || !showScore}
 				<!-- What the student struggled with, note by note, for the teacher to
 				     read over their shoulder at the end. -->
 				<section class="report">
-					<h3>Notes missed</h3>
+					<h3>{showScore ? 'Notes missed' : 'Notes to practise'}</h3>
 					{#if report.length}
 						<ul class="misses">
 							{#each report as note (note.key)}
 								<li>
 									<!-- The note itself, drawn as it was asked. -->
 									<div class="missed-staff">
-										<Staff {clef} keySig={settings.key} note={reportNote(note)} />
+										<Staff clef={note.clef} {keySig} note={reportNote(note)} />
 									</div>
 									<div class="missed-body">
 										<p class="count">Missed {note.wrong} of {note.asked}</p>
 										<ul class="diffs">
 											{#each note.misses as m, i (i)}
-												<li>
-													<span class="gave"><span class="mark">✗</span> You said {m.gave}</span>
-													{#if m.want}
-														<span class="want"><span class="mark">✓</span> It was {m.want}</span>
-													{/if}
-													{#if m.times > 1}
-														<span class="times">×{m.times}</span>
-													{/if}
-												</li>
+												{#if m.played && practice}
+													<!-- A fingering is shown as fingerings, side by side. -->
+													<li class="played">
+														<figure>
+															<figcaption class="gave">
+																<span class="mark">✗</span> You played
+															</figcaption>
+															<FingeringPicture
+																controls={practice.controls}
+																fingering={m.played.gave}
+																{span}
+															/>
+														</figure>
+														<figure>
+															<figcaption class="want">
+																<span class="mark">✓</span> It was
+															</figcaption>
+															<FingeringPicture
+																controls={practice.controls}
+																fingering={m.played.want}
+																{span}
+																right
+															/>
+														</figure>
+														{#if m.times > 1}
+															<span class="times">×{m.times}</span>
+														{/if}
+													</li>
+												{:else}
+													<li>
+														<span class="gave"><span class="mark">✗</span> You said {m.gave}</span>
+														{#if m.want}
+															<span class="want"><span class="mark">✓</span> It was {m.want}</span>
+														{/if}
+														{#if m.times > 1}
+															<span class="times">×{m.times}</span>
+														{/if}
+													</li>
+												{/if}
 											{/each}
 										</ul>
 									</div>
@@ -752,6 +1013,60 @@
 	}
 	.muted {
 		opacity: 0.85;
+	}
+	/* The two staves of a grand staff sit close, as on a piano part. */
+	.grand :global(.staff + .staff) {
+		margin-top: -18%;
+	}
+	.assignment {
+		margin: 0 0 0.25rem;
+		font-weight: 700;
+		color: var(--blue-dark);
+	}
+	.score-choice {
+		display: inline-flex;
+		gap: 0.4rem;
+		align-items: center;
+		font-weight: 600;
+		cursor: pointer;
+	}
+	.score-toggle {
+		margin-left: 0.6rem;
+		padding: 0.15rem 0.5rem;
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		background: #fff;
+		font-size: 0.75rem;
+		color: #555;
+		cursor: pointer;
+	}
+	.score-toggle:hover {
+		background: var(--card);
+	}
+	.next {
+		align-self: center;
+		min-width: 12rem;
+		padding: 0.85rem 1.5rem;
+		font-size: 1.1rem;
+		gap: 0.6rem;
+	}
+	.next .enter {
+		font-size: 0.75rem;
+		opacity: 0.75;
+	}
+	.played {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-end;
+		gap: 0.75rem 1.25rem;
+	}
+	.played figure {
+		margin: 0;
+		min-width: 7rem;
+	}
+	.played figcaption {
+		display: block;
+		margin-bottom: 0.2rem;
 	}
 	.statusbar {
 		display: flex;

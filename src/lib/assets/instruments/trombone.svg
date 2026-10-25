@@ -1,17 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 64">
-  <!-- Tenor trombone, side view: long double-tube slide with its U-crook at the left, bell section above it flaring left, tuning-slide bow and mouthpiece at the right. No valves. -->
-  <path d="M68 11 L54 11 C38 11 18 7 8 2 L8 28 C18 23 38 19 54 19 L68 19 Z" fill="#f2b632"/>
-  <path d="M62 19 L54 19 C38 19 18 23 8 28 L8 16 C26 16 46 17 62 19 Z" fill="#3b2a10" opacity="0.18"/>
-  <path d="M50 13 C36 13 24 10 15 6.5" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
-  <path d="M68 11 L54 11 C38 11 18 7 8 2 M8 28 C18 23 38 19 54 19 L68 19" fill="none" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
-  <ellipse cx="8" cy="15" rx="4" ry="13" fill="#f2b632"/>
-  <ellipse cx="8" cy="15" rx="4" ry="13" fill="#3b2a10" opacity="0.25"/>
-  <ellipse cx="8" cy="15" rx="4" ry="13" fill="none" stroke="#3b2a10" stroke-width="3"/>
-  <g fill="none" stroke-linecap="butt" stroke-linejoin="round">
-    <path d="M66 15 H138 A12 12 0 0 1 138 39 H22 A8.5 8.5 0 0 0 22 56 H124" stroke="#3b2a10" stroke-width="11"/>
-    <path d="M60 15 H138 A12 12 0 0 1 138 39 H22 A8.5 8.5 0 0 0 22 56 H124" stroke="#f2b632" stroke-width="5"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 112">
+  <!-- Tenor trombone, side view tilted 20 degrees: big bell up-left with its dark mouth showing, long double-tube slide whose U-crook reaches past the bell, tuning-slide bow with a brace, hand brace and mouthpiece down-right. No valves. -->
+  <g transform="rotate(20 64 56) translate(12 22)">
+    <g fill="none" stroke-linecap="butt" stroke-linejoin="round">
+      <path d="M62 22.5 H89 A10 10 0 0 1 89 42.5 H15 A10 10 0 0 0 15 62.5 H85" stroke="#3b2a10" stroke-width="10"/>
+      <path d="M62 22.5 H89 A10 10 0 0 1 89 42.5 H15 A10 10 0 0 0 15 62.5 H85" stroke="#f2b632" stroke-width="4"/>
+    </g>
+    <path d="M64 19 L56 19 C44 19 35 11 27 1.5 L27 43.5 C35 34 44 26 56 26 L64 26 Z" fill="#f2b632"/>
+    <path d="M60 26 L56 26 C44 26 35 34 27 43.5 L27 24 C40 24 51 25 60 26 Z" fill="#3b2a10" opacity="0.18"/>
+    <path d="M53 21 C44 21 37 16 32 10" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
+    <path d="M64 19 L56 19 C44 19 35 11 27 1.5 M27 43.5 C35 34 44 26 56 26 L64 26" fill="none" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+    <ellipse cx="27" cy="22.5" rx="5.5" ry="21" fill="#f2b632"/>
+    <ellipse cx="27" cy="22.5" rx="5.5" ry="21" fill="#3b2a10" opacity="0.3"/>
+    <ellipse cx="27" cy="22.5" rx="5.5" ry="21" fill="none" stroke="#3b2a10" stroke-width="3"/>
+    <rect x="78" y="27.5" width="4" height="10" fill="#f2b632" stroke="#3b2a10" stroke-width="3"/>
+    <rect x="66" y="47.5" width="4" height="10" fill="#f2b632" stroke="#3b2a10" stroke-width="3"/>
+    <path d="M97 58 C93 60 90 61 85 61 L85 64 C90 64 93 65 97 67 Z" fill="#fbf3dc" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round"/>
+    <ellipse cx="98" cy="62.5" rx="2.5" ry="5.5" fill="#fbf3dc" stroke="#3b2a10" stroke-width="3"/>
   </g>
-  <rect x="108" y="39" width="5" height="17" fill="#f2b632" stroke="#3b2a10" stroke-width="3"/>
-  <path d="M136 51 C132 53 129 54.5 124 54.5 L124 57.5 C129 57.5 132 59 136 61 Z" fill="#fbf3dc" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round"/>
-  <ellipse cx="137" cy="56" rx="2.5" ry="5.5" fill="#fbf3dc" stroke="#3b2a10" stroke-width="3"/>
 </svg>

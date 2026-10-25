@@ -370,6 +370,38 @@ export function chartPitches(inst: BandInstrument): number[] {
 	return [...CHARTS[inst].keys()].sort((a, b) => a - b);
 }
 
+const NATURALS: [number, string][] = [
+	[0, 'C'],
+	[2, 'D'],
+	[4, 'E'],
+	[5, 'F'],
+	[7, 'G'],
+	[9, 'A'],
+	[11, 'B']
+];
+
+// The natural note at or below (or above) a pitch: F♯3 → F3 going down.
+function naturalNear(pitch: number, direction: -1 | 1): string {
+	for (let p = pitch; ; p += direction) {
+		const pc = ((p % 12) + 12) % 12;
+		const natural = NATURALS.find(([n]) => n === pc);
+		if (natural) return `${natural[1]}${Math.floor(p / 12)}`;
+	}
+}
+
+/**
+ * The furthest a teacher may stretch an instrument's range: from the lowest to
+ * the highest note its chart covers, as staff positions. The notes at the very
+ * ends may only be playable with a sharp or flat; those without are skipped.
+ */
+export function chartRange(inst: BandInstrument): Range {
+	const pitches = chartPitches(inst);
+	return {
+		low: naturalNear(pitches[0], -1),
+		high: naturalNear(pitches[pitches.length - 1], 1)
+	};
+}
+
 // ---------------------------------------------------------------------------
 // Answers
 // ---------------------------------------------------------------------------
