@@ -1,20 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 112">
-  <!-- Tenor trombone, side view tilted 20 degrees: big bell up-left with its dark mouth showing, long double-tube slide whose U-crook reaches past the bell, tuning-slide bow with a brace, hand brace and mouthpiece down-right. No valves. -->
-  <g transform="rotate(20 64 56) translate(12 22)">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 96">
+  <!-- Tenor trombone, side view tipped 10 degrees: the bell section on top with its bell flaring forward to the right, a tuning bow at the back, and a long slide of two straight parallel tubes running far past the bell to a U-crook. Hand braces between the tubes, mouthpiece pointing back. No valves. -->
+  <g transform="rotate(10 72 48) translate(4 14)">
     <g fill="none" stroke-linecap="butt" stroke-linejoin="round">
-      <path d="M62 22.5 H89 A10 10 0 0 1 89 42.5 H15 A10 10 0 0 0 15 62.5 H85" stroke="#3b2a10" stroke-width="10"/>
-      <path d="M62 22.5 H89 A10 10 0 0 1 89 42.5 H15 A10 10 0 0 0 15 62.5 H85" stroke="#f2b632" stroke-width="4"/>
+      <path d="M44 22 H22 A10 10 0 0 0 22 42 H116 A9 9 0 0 1 116 60 H18" stroke="#3b2a10" stroke-width="13"/>
+      <path d="M44 22 H22 A10 10 0 0 0 22 42 H116 A9 9 0 0 1 116 60 H18" stroke="#f2b632" stroke-width="7"/>
     </g>
-    <path d="M64 19 L56 19 C44 19 35 11 27 1.5 L27 43.5 C35 34 44 26 56 26 L64 26 Z" fill="#f2b632"/>
-    <path d="M60 26 L56 26 C44 26 35 34 27 43.5 L27 24 C40 24 51 25 60 26 Z" fill="#3b2a10" opacity="0.18"/>
-    <path d="M53 21 C44 21 37 16 32 10" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
-    <path d="M64 19 L56 19 C44 19 35 11 27 1.5 M27 43.5 C35 34 44 26 56 26 L64 26" fill="none" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
-    <ellipse cx="27" cy="22.5" rx="5.5" ry="21" fill="#f2b632"/>
-    <ellipse cx="27" cy="22.5" rx="5.5" ry="21" fill="#3b2a10" opacity="0.3"/>
-    <ellipse cx="27" cy="22.5" rx="5.5" ry="21" fill="none" stroke="#3b2a10" stroke-width="3"/>
-    <rect x="78" y="27.5" width="4" height="10" fill="#f2b632" stroke="#3b2a10" stroke-width="3"/>
-    <rect x="66" y="47.5" width="4" height="10" fill="#f2b632" stroke="#3b2a10" stroke-width="3"/>
-    <path d="M97 58 C93 60 90 61 85 61 L85 64 C90 64 93 65 97 67 Z" fill="#fbf3dc" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round"/>
-    <ellipse cx="98" cy="62.5" rx="2.5" ry="5.5" fill="#fbf3dc" stroke="#3b2a10" stroke-width="3"/>
+    <!-- braces -->
+    <rect x="28" y="28" width="6" height="10" fill="#f2b632" stroke="#3b2a10" stroke-width="3"/>
+    <rect x="98" y="46" width="6" height="10" fill="#f2b632" stroke="#3b2a10" stroke-width="3"/>
+    <rect x="28" y="46" width="6" height="10" fill="#f2b632" stroke="#3b2a10" stroke-width="3"/>
+    <!-- bell -->
+    <path d="M40 18.5 L48 18.5 C59 18.5 67 11 73 0 L73 44 C67 33 59 25.5 48 25.5 L40 25.5 Z" fill="#f2b632"/>
+    <path d="M40 22 L73 22 L73 44 C67 33 59 25.5 48 25.5 L40 25.5 Z" fill="#3b2a10" opacity="0.18"/>
+    <path d="M50 20.5 C59 20 65 14 69 7" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
+    <path d="M40 18.5 L48 18.5 C59 18.5 67 11 73 0 M73 44 C67 33 59 25.5 48 25.5 L40 25.5" fill="none" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+    <ellipse cx="73" cy="22" rx="6" ry="22" fill="#f2b632"/>
+    <ellipse cx="73" cy="22" rx="6" ry="22" fill="#3b2a10" opacity="0.25"/>
+    <ellipse cx="73" cy="22" rx="6" ry="22" fill="none" stroke="#3b2a10" stroke-width="3"/>
+    <!-- mouthpiece pointing back -->
+    <path d="M8 55 C11 57 14 58.5 18 58.5 L18 61.5 C14 61.5 11 63 8 65 Z" fill="#fbf3dc" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round"/>
+    <ellipse cx="7" cy="60" rx="2.5" ry="6" fill="#fbf3dc" stroke="#3b2a10" stroke-width="3"/>
   </g>
 </svg>
