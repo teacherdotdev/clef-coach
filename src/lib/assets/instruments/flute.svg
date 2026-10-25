@@ -1,17 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 64">
   <!-- Concert flute: a long silver tube lying almost flat, tilted up slightly to the right; crown cap and lip plate with its embouchure hole near the left end, a row of round key cups along the body. -->
-  <g transform="rotate(-8 72 32)" stroke-linejoin="round" stroke-linecap="round">
-    <rect x="12" y="25" width="122" height="14" rx="3" fill="#d9dee7" stroke="#3b2a10" stroke-width="3"/>
-    <rect x="6" y="23.5" width="9" height="17" rx="3.5" fill="#d9dee7" stroke="#3b2a10" stroke-width="3"/>
-    <ellipse cx="30" cy="30" rx="9" ry="7.5" fill="#d9dee7" stroke="#3b2a10" stroke-width="3"/>
-    <ellipse cx="30" cy="29.5" rx="4.5" ry="3" fill="#2f3140"/>
-    <g fill="#d9dee7" stroke="#3b2a10" stroke-width="2.5">
-      <circle cx="58" cy="32" r="5.5"/>
-      <circle cx="70" cy="32" r="5.5"/>
-      <circle cx="82" cy="32" r="5.5"/>
-      <circle cx="97" cy="32" r="5.5"/>
-      <circle cx="109" cy="32" r="5.5"/>
-      <circle cx="124" cy="32" r="4.5"/>
+  <g transform="rotate(-7 72 32)" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="12" y="23" width="122" height="18" rx="4" fill="#d9dee7" stroke="#3b2a10" stroke-width="3"/>
+    <path d="M14 34 H132 V37 A4 4 0 0 1 128 41 H18 A4 4 0 0 1 14 37 Z" fill="#aeb6c4"/>
+    <path d="M18 27.5 H130" stroke="#ffffff" stroke-width="3" opacity="0.6"/>
+    <rect x="12" y="23" width="122" height="18" rx="4" fill="none" stroke="#3b2a10" stroke-width="3"/>
+    <g fill="#d9dee7" stroke="#3b2a10" stroke-width="3">
+      <rect x="5" y="21" width="10" height="22" rx="4"/>
+      <rect x="44" y="21.5" width="6" height="21" rx="2"/>
+      <rect x="111" y="21.5" width="6" height="21" rx="2"/>
+    </g>
+    <ellipse cx="29" cy="31" rx="10" ry="9" fill="#d9dee7" stroke="#3b2a10" stroke-width="3"/>
+    <ellipse cx="29" cy="30" rx="5" ry="3.5" fill="#2f3140"/>
+    <g fill="#d9dee7" stroke="#3b2a10" stroke-width="3">
+      <circle cx="61" cy="32" r="6.5"/>
+      <circle cx="74" cy="32" r="6.5"/>
+      <circle cx="87" cy="32" r="6.5"/>
+      <circle cx="100" cy="32" r="6.5"/>
+      <circle cx="125" cy="32" r="5"/>
+    </g>
+    <g fill="#3b2a10" opacity="0.6">
+      <circle cx="61" cy="32" r="2.5"/>
+      <circle cx="74" cy="32" r="2.5"/>
+      <circle cx="87" cy="32" r="2.5"/>
+      <circle cx="100" cy="32" r="2.5"/>
     </g>
   </g>
 </svg>

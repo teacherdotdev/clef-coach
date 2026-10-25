@@ -438,3 +438,76 @@ export function playableNotes(
 	}
 	return out;
 }
+
+// ---------------------------------------------------------------------------
+// The fingerboard drawing
+// ---------------------------------------------------------------------------
+
+/**
+ * One place on the drawn fingerboard a student can tap. On the violin, viola
+ * and cello each spot is a finger — the low 2 and the high 2 are two spots — so
+ * one tap answers string and finger together. On the bass a spot is just a
+ * place on the string: the same place is a different finger in each position,
+ * so the finger is worked out from the position the student names next.
+ */
+export interface Spot {
+	/** 'string:finger' (violin, viola, cello) or 'string:half steps' (bass). */
+	id: string;
+	string: number;
+	/** Half steps above the open string; 0 is the open string. */
+	distance: number;
+	/** The finger this spot is, or null on the bass. */
+	finger: FingerId | null;
+}
+
+/** How far up the string a fingering puts the finger, in half steps. */
+export function spotDistance(inst: Instrument, f: Fingering): number {
+	if (isOpen(f)) return 0;
+	const positions = INSTRUMENTS[inst].positions;
+	const pos = positions.find((p) => p.id === (f.position ?? positions[0].id)) ?? positions[0];
+	return pos.offsets[f.finger];
+}
+
+/** The spot a fingering is played at. */
+export function spotOf(inst: Instrument, f: Fingering): string {
+	if (INSTRUMENTS[inst].usesPositions) return `${f.string}:${spotDistance(inst, f)}`;
+	return `${f.string}:${f.finger}`;
+}
+
+/**
+ * Every spot to draw, given the fingers (and, on the bass, positions) being
+ * taught. A finger the teacher has switched off is not drawn — a spot the
+ * student is never taught would only be a trap.
+ */
+export function spotsFor(inst: Instrument, opts: FingeringOptions): Spot[] {
+	const def = INSTRUMENTS[inst];
+	const spots: Spot[] = [];
+	def.strings.forEach((_, string) => {
+		if (opts.fingers.includes('open'))
+			spots.push({
+				id: def.usesPositions ? `${string}:0` : `${string}:open`,
+				string,
+				distance: 0,
+				finger: def.usesPositions ? null : 'open'
+			});
+		if (def.usesPositions) {
+			const distances = new Set<number>();
+			for (const pos of def.positions)
+				if (opts.positions.includes(pos.id))
+					for (const finger of opts.fingers)
+						if (finger !== 'open' && pos.offsets[finger]) distances.add(pos.offsets[finger]);
+			for (const distance of [...distances].sort((a, b) => a - b))
+				spots.push({ id: `${string}:${distance}`, string, distance, finger: null });
+			return;
+		}
+		for (const finger of FINGER_SETS[inst])
+			if (finger !== 'open' && opts.fingers.includes(finger))
+				spots.push({
+					id: `${string}:${finger}`,
+					string,
+					distance: def.positions[0].offsets[finger],
+					finger
+				});
+	});
+	return spots;
+}

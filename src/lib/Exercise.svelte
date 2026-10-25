@@ -13,6 +13,7 @@
 	// drawing of their instrument instead. A wrong fingering stays on the drawing
 	// until they move on, since a fingering takes longer to take in than a word.
 	import { onDestroy, onMount, tick } from 'svelte';
+	import Fingerboard from './Fingerboard.svelte';
 	import FingeringPicture from './FingeringPicture.svelte';
 	import PlayPad from './PlayPad.svelte';
 	import Staff from './Staff.svelte';
@@ -42,6 +43,7 @@
 		formatDuration,
 		isChallengeMode,
 		settingsToQuery,
+		usesFingerboard,
 		type Settings
 	} from './settings';
 	import {
@@ -54,6 +56,9 @@
 		positionLabel,
 		positionName,
 		preferredFingering,
+		spotOf,
+		spotsFor,
+		stringName,
 		type Fingering,
 		type PositionId
 	} from './strings';
@@ -122,7 +127,12 @@
 		return items[Math.floor(Math.random() * items.length)];
 	}
 
-	type StepId = 'note' | 'accidental' | 'string' | 'finger' | 'position' | 'play';
+	type StepId = 'note' | 'accidental' | 'string' | 'spot' | 'finger' | 'position' | 'play';
+
+	// A string student on the drawing taps the spot on the fingerboard, which
+	// answers string and finger at once (and, on the bass, where the hand is).
+	const boardMode = $derived(usesFingerboard(settings));
+	const spots = $derived(boardMode ? spotsFor(settings.instrument, fingering) : []);
 	interface Given {
 		step: StepId;
 		label: string;
@@ -334,6 +344,15 @@
 	function stepAfter(from: StepId): StepId | null {
 		if (from === 'note' && settings.accidentals) return 'accidental';
 		if (practice) return from === 'play' ? null : 'play';
+		if (boardMode) {
+			if (from === 'note' || from === 'accidental') return 'spot';
+			// On the bass a spot is a place, not a finger: the position the hand is
+			// in says which finger lands there. Without the position question the
+			// finger is asked instead.
+			if (from === 'spot' && !options.every(isOpen))
+				return asksPosition(settings) ? 'position' : def.usesPositions ? 'finger' : null;
+			return null;
+		}
 		if (from === 'note' || from === 'accidental')
 			return settings.askString ? 'string' : fingeringStep();
 		if (from === 'string') return fingeringStep();
@@ -404,7 +423,8 @@
 
 	// The buttons for the step being asked.
 	const choices = $derived.by((): { key: string; label: string }[] => {
-		if (step === 'play') return [];
+		// Played and tapped answers are given on a drawing, not buttons.
+		if (step === 'play' || step === 'spot') return [];
 		if (step === 'note') return LETTERS.map((l) => ({ key: l, label: chipLabel(l) }));
 		if (step === 'accidental')
 			return ALL_ACCIDENTALS.map((a) => ({
@@ -439,6 +459,7 @@
 		if (step === 'accidental') return key === sounding;
 		if (step === 'string') return options.some((o) => o.string === Number(key));
 		if (step === 'finger') return options.some((o) => o.finger === key);
+		if (step === 'spot') return options.some((o) => spotOf(instrument, o) === key);
 		if (key === 'open') return options.some(isOpen);
 		return options.some((o) => o.position === key);
 	}
@@ -447,6 +468,7 @@
 	function narrow(key: string) {
 		if (step === 'string') options = options.filter((o) => o.string === Number(key));
 		else if (step === 'finger') options = options.filter((o) => o.finger === key);
+		else if (step === 'spot') options = options.filter((o) => spotOf(instrument, o) === key);
 		else if (step === 'position')
 			options = key === 'open' ? options.filter(isOpen) : options.filter((o) => o.position === key);
 	}
@@ -455,6 +477,7 @@
 		// With accidentals on the sign is asked on its own, so the letter stays bare.
 		if (asked === 'note') return settings.accidentals ? key : noteLabel(keySig, key);
 		if (asked === 'play') return playedLabel(key);
+		if (asked === 'spot') return spotLabel(key);
 		if (asked === 'accidental') return ACCIDENTAL_NAMES[key as Accidental];
 		if (asked === 'string') return `${def.strings[Number(key)].replace(/\d+$/, '')} string`;
 		if (asked === 'finger') return key === 'open' ? 'Open' : `Finger ${FINGERS[key].label}`;
@@ -476,8 +499,18 @@
 		const f = preferredFingering(from);
 		if (!f) return '';
 		if (asked === 'string') return chipLabel(String(f.string), asked);
+		if (asked === 'spot') return chipLabel(spotOf(instrument, f), asked);
 		if (asked === 'finger') return chipLabel(f.finger, asked);
 		return chipLabel(f.position ?? 'open', asked);
+	}
+
+	/** A fingerboard spot in words: "A string, low 2nd finger". */
+	function spotLabel(id: string): string {
+		const [string, where] = id.split(':');
+		const name = `${stringName(instrument, Number(string))} string`;
+		if (where === 'open' || where === '0') return `${name}, open`;
+		if (FINGERS[where] && !def.usesPositions) return `${name}, ${FINGERS[where].name}`;
+		return `${name}, ${where} half step${where === '1' ? '' : 's'} up`;
 	}
 
 	/** A fingering in words: "valves 1 and 2", "6th position", "the B♭4 key". */
@@ -499,15 +532,17 @@
 	const promptText = $derived(
 		step === 'play'
 			? playPrompt
-			: step === 'note'
-				? 'Name this note'
-				: step === 'accidental'
-					? 'Sharp, natural, or flat?'
-					: step === 'string'
-						? 'Which string?'
-						: step === 'finger'
-							? 'Which finger?'
-							: 'Which position?'
+			: step === 'spot'
+				? 'Tap where your finger goes'
+				: step === 'note'
+					? 'Name this note'
+					: step === 'accidental'
+						? 'Sharp, natural, or flat?'
+						: step === 'string'
+							? 'Which string?'
+							: step === 'finger'
+								? 'Which finger?'
+								: 'Which position?'
 	);
 
 	// After a wrong answer `options` holds just the fingering a teacher would
@@ -515,6 +550,7 @@
 	const revealText = $derived.by(() => {
 		if (step === 'note') return `It was ${noteLabel(keySig, current.note.letter, written)}`;
 		if (step === 'play') return reveal ? `It was ${playedLabel(reveal.want)}` : '';
+		if (step === 'spot') return reveal ? `It was the ${spotLabel(reveal.want)}` : '';
 		if (step === 'accidental')
 			return `It was ${current.note.letter}${ACCIDENTAL_SYMBOLS[sounding]}`;
 		const f = options[0];
@@ -586,6 +622,33 @@
 		locked = true;
 	}
 
+	// Tapping a spot on the fingerboard. A wrong one stays on the drawing, with
+	// the spot a teacher would have written in, until the student moves on.
+	function pickSpot(key: string) {
+		if (locked || phase !== 'running' || step !== 'spot') return;
+		attempted += 1;
+		const label = spotLabel(key);
+		if (isRight(key)) {
+			correct += 1;
+			narrow(key);
+			given = [...given, { step, label, ok: true }];
+			locked = true;
+			revealTimer = setTimeout(advance, CORRECT_MS);
+			return;
+		}
+		const pref = preferredFingering(options);
+		const want = pref ? spotOf(instrument, pref) : '';
+		given = [...given, { step, label, ok: false }];
+		wrongKeys = [key];
+		wrongAnswers = [
+			...wrongAnswers,
+			{ step, gave: label, want: rightLabel(step, options), played: { gave: key, want } }
+		];
+		if (pref) options = [pref];
+		reveal = { gave: key, want };
+		locked = true;
+	}
+
 	function next() {
 		if (reveal && phase === 'running') completeQuestion();
 	}
@@ -613,7 +676,15 @@
 
 	// The steps in the order they are asked, so a note's wrong answers read in
 	// the order the student met them.
-	const ORDERED_STEPS: StepId[] = ['note', 'accidental', 'string', 'position', 'finger', 'play'];
+	const ORDERED_STEPS: StepId[] = [
+		'note',
+		'accidental',
+		'string',
+		'spot',
+		'position',
+		'finger',
+		'play'
+	];
 
 	/**
 	 * The notes that went wrong, the ones missed most often first. This is the
@@ -825,6 +896,21 @@
 			{/if}
 		</div>
 
+		{#if step === 'spot'}
+			<Fingerboard
+				instrument={settings.instrument}
+				{spots}
+				struck={reveal?.gave ?? null}
+				want={reveal?.want ?? null}
+				onpick={reveal || locked ? undefined : pickSpot}
+			/>
+			{#if reveal}
+				<button type="button" class="btn-primary next" onclick={next}>
+					Next <span class="enter">Space</span>
+				</button>
+			{/if}
+		{/if}
+
 		{#if step === 'play' && practice}
 			<PlayPad
 				bind:this={pad}
@@ -939,6 +1025,34 @@
 																fingering={m.played.want}
 																{span}
 																right
+															/>
+														</figure>
+														{#if m.times > 1}
+															<span class="times">×{m.times}</span>
+														{/if}
+													</li>
+												{:else if m.played && m.step === 'spot'}
+													<li class="played">
+														<figure>
+															<figcaption class="gave">
+																<span class="mark">✗</span> You tapped
+															</figcaption>
+															<Fingerboard
+																instrument={settings.instrument}
+																{spots}
+																struck={m.played.gave}
+																small
+															/>
+														</figure>
+														<figure>
+															<figcaption class="want">
+																<span class="mark">✓</span> It was
+															</figcaption>
+															<Fingerboard
+																instrument={settings.instrument}
+																{spots}
+																want={m.played.want}
+																small
 															/>
 														</figure>
 														{#if m.times > 1}

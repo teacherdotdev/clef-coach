@@ -721,6 +721,36 @@
 					</div>
 				</fieldset>
 
+				{#if settings.askFinger}
+					<fieldset>
+						<legend>Answer with</legend>
+						<p class="hint">How students give the string and finger. Students can't change this.</p>
+						<div class="chips">
+							<button
+								type="button"
+								class="chip"
+								class:on={settings.answerMode === 'draw'}
+								onclick={() => (settings.answerMode = 'draw')}>Fingerboard drawing</button
+							>
+							<button
+								type="button"
+								class="chip"
+								class:on={settings.answerMode === 'buttons'}
+								onclick={() => (settings.answerMode = 'buttons')}>Buttons</button
+							>
+						</div>
+						<p class="hint after">
+							{#if settings.answerMode === 'draw'}
+								Students tap where the finger goes on the fingerboard.{usesPositions(settings)
+									? ' Bass students then name the position.'
+									: ''}
+							{:else}
+								Students pick the string, then the finger, from buttons.
+							{/if}
+						</p>
+					</fieldset>
+				{/if}
+
 				{#if usesPositions(settings)}
 					<fieldset>
 						<legend>Position system</legend>

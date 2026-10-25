@@ -76,6 +76,9 @@ export interface Settings {
 	positionSystem: PositionSystem; // Simandl or Rabbath position names
 	bassPositions: PositionId[]; // which positions bass answers may use
 	fingers: FingerId[]; // which fingers the student may be asked for
+	// Answer string and finger by tapping the spot on a drawn fingerboard, or
+	// with the original buttons. The teacher's choice; students cannot change it.
+	answerMode: AnswerMode;
 	// Challenge mode
 	questionLimit: number; // 0 = off, else 1..1000
 	timeLimitSec: number; // 0 = off, else 1..3600 (an hour)
@@ -96,6 +99,8 @@ export interface Settings {
 }
 
 export const MAX_TITLE_LENGTH = 80;
+
+export type AnswerMode = 'draw' | 'buttons';
 
 /** Naming the note is on by default for band and off for piano. */
 export function defaultAskName(activity: ActivityType): boolean {
@@ -138,6 +143,7 @@ export const DEFAULT_SETTINGS: Settings = {
 	timeLimitSec: 0,
 	detailedReport: false,
 	activity: 'strings',
+	answerMode: 'draw',
 	title: '',
 	level: 'beginner',
 	askName: true,
@@ -206,6 +212,11 @@ export function clampRange(s: Settings): Settings {
 	return { ...s, rangeLow: noteName(low), rangeHigh: noteName(high) };
 }
 
+/** Whether string and finger are answered on the drawn fingerboard. */
+export function usesFingerboard(s: Settings): boolean {
+	return s.activity === 'strings' && s.answerMode === 'draw' && s.askFinger;
+}
+
 /** Does this configuration ask anything beyond the note name? */
 export function asksFingering(s: Settings): boolean {
 	return s.askString || s.askFinger;
@@ -263,7 +274,9 @@ export function settingsToQuery(s: Settings): string {
 	p.set('tsec', String(s.timeLimitSec));
 	p.set('rep', s.detailedReport ? '1' : '0');
 	// String links are written exactly as they always were, so a student's
-	// high score for one is still found under the same link.
+	// high score for one is still found under the same link. Only the drawing
+	// is new, and a link without it means buttons.
+	if (s.activity === 'strings' && s.answerMode === 'draw') p.set('mode', 'draw');
 	if (s.activity !== 'strings') {
 		p.set('act', s.activity);
 		p.set('lvl', s.level);
@@ -353,6 +366,9 @@ export function settingsFromParams(params: URLSearchParams): Settings {
 		timeLimitSec: readTimeLimit(params),
 		detailedReport: bool(params.get('rep'), d.detailedReport),
 		activity,
+		// String links made before the fingerboard drawing existed stay on
+		// buttons. Band and piano links never carry it, and keep the default.
+		answerMode: params.get('mode') === 'draw' || activity !== 'strings' ? d.answerMode : 'buttons',
 		title: (params.get('title') ?? '').trim().slice(0, MAX_TITLE_LENGTH),
 		level: oneOf(params.get('lvl'), ALL_LEVELS, d.level),
 		askName: bool(params.get('askname'), defaultAskName(activity)),
@@ -429,6 +445,7 @@ export function settingsFromJson(raw: unknown): Settings {
 	put('tsec', o.timeLimitSec);
 	putBool('rep', o.detailedReport);
 	put('act', o.activity);
+	put('mode', o.answerMode);
 	put('title', o.title);
 	put('lvl', o.level);
 	putBool('askname', o.askName);

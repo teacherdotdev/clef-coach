@@ -112,3 +112,11 @@ describe('range overrides', () => {
 		expect(s.rangeOverrides.horn).toEqual({ low: 'C4', high: 'C5' });
 	});
 });
+
+describe('answer mode', () => {
+	test('new string activities use the drawing; links without it stay on buttons', () => {
+		expect(DEFAULT_SETTINGS.answerMode).toBe('draw');
+		expect(roundTrip(DEFAULT_SETTINGS).answerMode).toBe('draw');
+		expect(settingsFromParams(new URLSearchParams('inst=viola')).answerMode).toBe('buttons');
+	});
+});
