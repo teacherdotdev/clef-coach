@@ -106,9 +106,10 @@
 			return;
 		}
 		if (key === 'enter' && usesPlay) {
-			// A focused valve or button handles its own Enter.
+			// A focused button handles its own Enter; a focused key or valve does
+			// not, so Enter plays whatever is held down.
 			const el = event.target as HTMLElement | null;
-			if (el && el !== document.body && el.closest('button, [role="button"]')) return;
+			if (el && el !== document.body && el.closest('button')) return;
 			event.preventDefault();
 			play();
 		}
@@ -204,7 +205,9 @@
 	}
 	.pad.wide {
 		grid-template-columns: 1fr;
-		grid-template-areas: 'controls';
+		grid-template-areas:
+			'controls'
+			'play';
 	}
 	.art {
 		grid-area: art;

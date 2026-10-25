@@ -39,6 +39,7 @@
 		nameFromJson,
 		settingsFromJson,
 		settingsToQuery,
+		asksPosition,
 		usesPositions,
 		type ActivityType,
 		type Settings
@@ -741,8 +742,12 @@
 						</div>
 						<p class="hint after">
 							{#if settings.answerMode === 'draw'}
-								Students tap where the finger goes on the fingerboard.{usesPositions(settings)
-									? ' Bass students then name the position.'
+								Students tap where the finger goes on the fingerboard, which names the string too.{usesPositions(
+									settings
+								)
+									? asksPosition(settings)
+										? ' Bass students then name the position.'
+										: ' Bass students then name the finger.'
 									: ''}
 							{:else}
 								Students pick the string, then the finger, from buttons.

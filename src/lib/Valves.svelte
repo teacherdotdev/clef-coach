@@ -46,7 +46,9 @@
 	}
 
 	function onkey(event: KeyboardEvent, v: string) {
-		if (event.key !== 'Enter' && event.key !== ' ') return;
+		// Space presses a key; Enter is left to play the whole fingering. A
+		// picture that cannot be pressed leaves both keys to the page.
+		if (event.key !== ' ' || !ontoggle) return;
 		event.preventDefault();
 		// Keep the space bar from also reaching the page's own shortcuts.
 		event.stopPropagation();

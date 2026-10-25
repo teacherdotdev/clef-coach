@@ -63,7 +63,7 @@
 	}
 
 	function onkey(event: KeyboardEvent, p: number) {
-		if (event.key !== 'Enter' && event.key !== ' ') return;
+		if ((event.key !== 'Enter' && event.key !== ' ') || !onstrike) return;
 		event.preventDefault();
 		event.stopPropagation();
 		onstrike?.(p);

@@ -111,6 +111,9 @@ spot for each finger, like finger tapes, including low and high spots (L2, H2)
 and the cello's extensions. One tap answers string and finger together. On the
 bass the same spot can be different fingers in different positions, so the
 student names the position as a separate step after tapping.
+Because the tap names the string, the String question is always part of it on
+the drawing; switching String off only matters with buttons. A finger the
+teacher has switched off has no spot.
 
 ## Assignment
 

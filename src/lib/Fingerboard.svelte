@@ -74,7 +74,8 @@
 	}
 
 	function onkey(event: KeyboardEvent, id: string) {
-		if (event.key !== 'Enter' && event.key !== ' ') return;
+		// Once the answer is showing, Space and Enter belong to the Next button.
+		if ((event.key !== 'Enter' && event.key !== ' ') || !onpick) return;
 		event.preventDefault();
 		event.stopPropagation();
 		onpick?.(id);
