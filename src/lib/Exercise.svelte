@@ -16,7 +16,7 @@
 	import FingeringPicture from './FingeringPicture.svelte';
 	import PlayPad from './PlayPad.svelte';
 	import Staff from './Staff.svelte';
-	import { describeBandFingering, type BandInstrument } from './band';
+	import { CONTROLS, describeBandFingering, type BandInstrument } from './band';
 	import { bandPractice, keyboardSpan, pianoPractice, type Practice } from './practice';
 	import {
 		ACCIDENTAL_NAMES,
@@ -28,6 +28,7 @@
 		notesToAsk,
 		parseNoteName,
 		pitchInKey,
+		pitchName,
 		soundingAccidental,
 		writableAccidentals,
 		type Accidental,
@@ -485,25 +486,15 @@
 		return describeBandFingering(practice.instrument, answer);
 	}
 
-	// The twelve keys of an octave, for naming a key the student struck.
-	const PITCH_NAMES = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 	function keyName(answer: string): string {
 		const p = Number(answer);
 		// The note being asked keeps its own spelling: B♭, not A♯.
 		if (p === pitchInKey(current.index, keySig, written))
 			return `${noteLabel(keySig, current.note.letter, written)}${current.note.octave}`;
-		return `${PITCH_NAMES[((p % 12) + 12) % 12]}${Math.floor(p / 12)}`;
+		return pitchName(p);
 	}
 
-	const playPrompt = $derived(
-		practice?.controls === 'slide'
-			? 'Move the slide, then press Play'
-			: practice?.controls === 'valves' || practice?.controls === 'horn'
-				? 'Press the valves, then press Play'
-				: practice?.controls === 'bars'
-					? 'Strike the bar for this note'
-					: 'Click the key for this note'
-	);
+	const playPrompt = $derived(practice ? CONTROLS[practice.controls].prompt : '');
 
 	const promptText = $derived(
 		step === 'play'
@@ -933,6 +924,7 @@
 															</figcaption>
 															<FingeringPicture
 																controls={practice.controls}
+																instrument={practice.instrument}
 																fingering={m.played.gave}
 																{span}
 															/>
@@ -943,6 +935,7 @@
 															</figcaption>
 															<FingeringPicture
 																controls={practice.controls}
+																instrument={practice.instrument}
 																fingering={m.played.want}
 																{span}
 																right

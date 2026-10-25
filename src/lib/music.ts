@@ -213,6 +213,26 @@ export function chromaticPitch(letter: string, octave: number): number {
 	return octave * 12 + SEMITONES[letter];
 }
 
+/** Which of the twelve notes of the octave a pitch is: 0 for any C. */
+export function pitchClass(pitch: number): number {
+	return ((pitch % 12) + 12) % 12;
+}
+
+const PITCH_NAMES = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
+
+/**
+ * A pitch named without a key to spell it by: 'B♭4', 'F♯3'. The black keys get
+ * the spelling band music most often uses.
+ */
+export function pitchName(pitch: number): string {
+	return `${PITCH_NAMES[pitchClass(pitch)]}${Math.floor(pitch / 12)}`;
+}
+
+/** '1st', '2nd' … '7th', for slide and hand positions. */
+export function ordinal(n: number): string {
+	return ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th'][n] ?? `${n}th`;
+}
+
 // The half-step pitch of a diatonic staff position, as written in C major.
 export function pitchOfIndex(index: number): number {
 	const { letter, octave } = fromDiatonicIndex(index);

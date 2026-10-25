@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Oboe, tilted: a small tan double reed with a red thread wrapping at the upper left, a slim black body covered in silver keywork, and only a slight bell at the lower right. -->
+  <g transform="translate(62 62) rotate(-40)" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M-6.5 51 C-7 58 -10 62 -10.5 68 L10.5 68 C10 62 7 58 6.5 51 Z" fill="#2f3140"/>
+    <ellipse cx="0" cy="68" rx="10.5" ry="3" fill="#2f3140"/>
+    <path d="M-4.5 -44 L4.5 -44 L6.5 51 L-6.5 51 Z" fill="#2f3140"/>
+    <path d="M-2 -58 L-4 -70 L4 -70 L2 -58 Z" fill="#d9b07a"/>
+    <rect x="-3" y="-58" width="6" height="10" rx="1" fill="#c8553d"/>
+    <rect x="-5.5" y="-48" width="11" height="4" rx="1" fill="#d9dee7"/>
+    <rect x="-7" y="1" width="14" height="5" rx="1.5" fill="#d9dee7"/>
+    <rect x="-8" y="47" width="16" height="5" rx="1.5" fill="#d9dee7"/>
+  </g>
+</svg>

@@ -14,7 +14,7 @@
 		type BandInstrument
 	} from '$lib/band';
 	import { instrumentArt } from '$lib/instrumentArt';
-	import type { Accidental, Note } from '$lib/music';
+	import { pitchClass, pitchName, type Accidental, type Note } from '$lib/music';
 
 	// Bells are answered by the bar itself, so there is nothing to check.
 	const CHECKED = ALL_BAND_INSTRUMENTS.filter((i) => i !== 'bells');
@@ -37,16 +37,10 @@
 		['B', 'flat'],
 		['B', null]
 	];
-	const SIGNS = { sharp: '♯', flat: '♭', natural: '♮' };
 
 	function noteFor(pitch: number): Note {
-		const [letter, accidental] = SPELLING[((pitch % 12) + 12) % 12];
+		const [letter, accidental] = SPELLING[pitchClass(pitch)];
 		return { letter, octave: Math.floor(pitch / 12), value: 'whole', accidental };
-	}
-
-	function name(pitch: number): string {
-		const [letter, accidental] = SPELLING[((pitch % 12) + 12) % 12];
-		return `${letter}${accidental ? SIGNS[accidental] : ''}${Math.floor(pitch / 12)}`;
 	}
 
 	const rows = $derived(
@@ -92,13 +86,14 @@
 			<li>
 				<div class="note">
 					<Staff clef={def.clef} note={noteFor(row.pitch)} />
-					<span class="name">{name(row.pitch)}</span>
+					<span class="name">{pitchName(row.pitch)}</span>
 				</div>
 				<div class="ways">
 					{#each row.ways as way, i (way)}
 						<figure class:first={i === 0}>
 							<FingeringPicture
 								controls={def.controls}
+								instrument={shown}
 								fingering={way}
 								span={{ low: 0, high: 0 }}
 							/>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { ordinal } from './music';
 	// The trombone's slide, drawn as the player sees it stretched out in front
 	// of them: the slide tubes run left from the bell section, and the U-shaped
 	// crook at the end moves out through the seven positions. Clicking a
@@ -72,10 +73,6 @@
 		else if (event.key === 'ArrowRight') onset(Math.max(1, now - 1));
 		else return;
 		event.preventDefault();
-	}
-
-	function ordinal(p: number): string {
-		return ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th'][p];
 	}
 </script>
 

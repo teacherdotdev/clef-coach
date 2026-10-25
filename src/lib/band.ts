@@ -11,7 +11,8 @@
 // band activity is set in a concert key, and each instrument reads it in its own
 // written key (docs/adr/0001).
 
-import { chromaticPitch, type Clef, type KeyId } from './music';
+import { chromaticPitch, ordinal, pitchClass, type Clef, type KeyId } from './music';
+import { keysIn, type Woodwind } from './woodwinds';
 
 export type BandInstrument =
 	'trumpet' | 'horn' | 'trombone' | 'baritone' | 'baritoneTC' | 'tuba' | 'bells';
@@ -54,9 +55,53 @@ export const CONCERT_KEY_NAMES: Record<ConcertKey, string> = {
 
 /**
  * What the student answers on: three piston valves, the horn's three rotary
- * valves and thumb trigger, the trombone's slide, or a row of bars.
+ * valves and thumb trigger, the trombone's slide, a woodwind's keys, or a row
+ * of bars.
  */
-export type Controls = 'valves' | 'horn' | 'slide' | 'bars';
+export type Controls = 'valves' | 'horn' | 'slide' | 'woodwind' | 'bars';
+
+/** Everything that differs between the kinds of drawing, in one place. */
+export interface ControlsInfo {
+	/** What the student is asked to do. */
+	prompt: string;
+	/**
+	 * A fingering is several things held at once and needs a Play button; a key
+	 * or bar is played the moment it is struck.
+	 */
+	playButton: boolean;
+	/** Computer keys held down to press each valve. */
+	keyboard: Record<string, string>;
+	/** A keyboard needs the whole width, without the instrument's picture. */
+	wide: boolean;
+}
+
+export const CONTROLS: Record<Controls | 'piano', ControlsInfo> = {
+	// The right hand's home row works the three piston valves.
+	valves: {
+		prompt: 'Press the valves, then press Play',
+		playButton: true,
+		keyboard: { j: '1', k: '2', l: '3' },
+		wide: false
+	},
+	// The horn is played with the left hand, so its valves sit under that
+	// hand's fingers and the thumb works the trigger.
+	horn: {
+		prompt: 'Press the valves, then press Play',
+		playButton: true,
+		keyboard: { f: '1', d: '2', s: '3', ' ': 'T' },
+		wide: false
+	},
+	slide: { prompt: 'Move the slide, then press Play', playButton: true, keyboard: {}, wide: false },
+	// Too many keys at once for a home-row mapping, so woodwinds are clicked.
+	woodwind: {
+		prompt: 'Press the keys, then press Play',
+		playButton: true,
+		keyboard: {},
+		wide: false
+	},
+	bars: { prompt: 'Strike the bar for this note', playButton: false, keyboard: {}, wide: true },
+	piano: { prompt: 'Click the key for this note', playButton: false, keyboard: {}, wide: true }
+};
 
 /** A low and high note, as names like 'C4'. Sharps and flats come from the key. */
 export interface Range {
@@ -338,13 +383,24 @@ function byPitch(chart: Chart, shift = 0): Map<number, string[]> {
 // trumpet, a ninth and an octave-and-a-ninth lower, so they share its chart
 // moved down to where they read. The treble-clef baritone reads exactly as a
 // trumpet does.
-const CHARTS: Record<Exclude<BandInstrument, 'bells'>, Map<number, string[]>> = {
+// Each woodwind's keys and chart live in a file of their own under
+// ./woodwinds/, since a woodwind's chart is as much its key layout as its
+// fingerings.
+const WOODWINDS: Partial<Record<BandInstrument, Woodwind>> = {};
+
+/** The key layout and chart for a woodwind; null for any other instrument. */
+export function woodwindOf(inst: BandInstrument | null): Woodwind | null {
+	return (inst && WOODWINDS[inst]) ?? null;
+}
+
+const CHARTS: Partial<Record<BandInstrument, Map<number, string[]>>> = {
 	trumpet: byPitch(TRUMPET),
 	baritoneTC: byPitch(TRUMPET),
 	baritone: byPitch(TRUMPET, -14),
 	tuba: byPitch(TRUMPET, -26),
 	horn: byPitch(HORN),
-	trombone: byPitch(TROMBONE)
+	trombone: byPitch(TROMBONE),
+	...Object.fromEntries(Object.entries(WOODWINDS).map(([inst, ww]) => [inst, byPitch(ww.chart)]))
 };
 
 /**
@@ -357,7 +413,7 @@ export function bandFingerings(inst: BandInstrument, pitch: number): string[] {
 		const inRange = pitch >= pitchOfName(BELLS_LOW) && pitch <= pitchOfName(BELLS_HIGH);
 		return inRange ? [String(pitch)] : [];
 	}
-	return CHARTS[inst].get(pitch) ?? [];
+	return CHARTS[inst]?.get(pitch) ?? [];
 }
 
 /** Every pitch the chart covers, low to high — for the fingering chart page. */
@@ -367,7 +423,7 @@ export function chartPitches(inst: BandInstrument): number[] {
 		for (let p = pitchOfName(BELLS_LOW); p <= pitchOfName(BELLS_HIGH); p++) out.push(p);
 		return out;
 	}
-	return [...CHARTS[inst].keys()].sort((a, b) => a - b);
+	return [...(CHARTS[inst]?.keys() ?? [])].sort((a, b) => a - b);
 }
 
 const NATURALS: [number, string][] = [
@@ -383,7 +439,7 @@ const NATURALS: [number, string][] = [
 // The natural note at or below (or above) a pitch: F♯3 → F3 going down.
 function naturalNear(pitch: number, direction: -1 | 1): string {
 	for (let p = pitch; ; p += direction) {
-		const pc = ((p % 12) + 12) % 12;
+		const pc = pitchClass(p);
 		const natural = NATURALS.find(([n]) => n === pc);
 		if (natural) return `${natural[1]}${Math.floor(p / 12)}`;
 	}
@@ -427,13 +483,17 @@ export function isRightFingering(inst: BandInstrument, pitch: number, answer: st
 	return bandFingerings(inst, pitch).includes(answer);
 }
 
-const ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th'];
-
 /** "valves 1 and 2", "open", "trigger and valve 1", "6th position". */
 export function describeBandFingering(inst: BandInstrument, fingering: string): string {
 	const controls = BAND_INSTRUMENTS[inst].controls;
-	if (controls === 'slide') return `${ORDINALS[Number(fingering)]} position`;
+	if (controls === 'slide') return `${ordinal(Number(fingering))} position`;
 	if (controls === 'bars') return 'that bar';
+	if (controls === 'woodwind') {
+		const layout = woodwindOf(inst)!.layout;
+		const held = keysIn(fingering);
+		const names = layout.keys.filter((k) => held.has(k.id)).map((k) => k.label);
+		return names.length ? names.join(' ') : 'no keys';
+	}
 	const held = [...valvesIn(fingering)];
 	const trigger = held.includes('T');
 	const valves = held.filter((v) => v !== 'T');

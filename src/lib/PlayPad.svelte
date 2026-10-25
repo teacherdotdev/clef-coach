@@ -10,8 +10,17 @@
 	import Keys from './Keys.svelte';
 	import Slide from './Slide.svelte';
 	import Valves from './Valves.svelte';
-	import { valveAnswer, valvesIn, type BandInstrument, type Controls } from './band';
+	import WoodwindKeys from './WoodwindKeys.svelte';
+	import {
+		CONTROLS,
+		valveAnswer,
+		valvesIn,
+		woodwindOf,
+		type BandInstrument,
+		type Controls
+	} from './band';
 	import { instrumentArt } from './instrumentArt';
+	import { keysIn, woodwindAnswer } from './woodwinds';
 
 	let {
 		controls,
@@ -32,14 +41,9 @@
 		onplay: (answer: string) => void;
 	} = $props();
 
-	// The right hand's home row works the three piston valves; the horn is
-	// played with the left hand, so its valves sit under that hand's fingers
-	// and the thumb works the trigger.
-	const PISTON_KEYS: Record<string, string> = { j: '1', k: '2', l: '3' };
-	const HORN_KEYS: Record<string, string> = { f: '1', d: '2', s: '3', ' ': 'T' };
-	const keyMap = $derived(
-		controls === 'horn' ? HORN_KEYS : controls === 'valves' ? PISTON_KEYS : {}
-	);
+	const info = $derived(CONTROLS[controls]);
+	const keyMap = $derived(info.keyboard);
+	const woodwind = $derived(controls === 'woodwind' ? woodwindOf(instrument) : null);
 	const hints = $derived(
 		Object.fromEntries(
 			Object.entries(keyMap).map(([k, v]) => [v, k === ' ' ? 'Space' : k.toUpperCase()])
@@ -54,7 +58,7 @@
 	const held = $derived(new Set([...clicked, ...keyHeld]));
 
 	const art = $derived(instrumentArt(instrument ?? 'piano'));
-	const usesPlay = $derived(controls === 'valves' || controls === 'horn' || controls === 'slide');
+	const usesPlay = $derived(info.playButton);
 
 	function toggle(v: string) {
 		if (locked) return;
@@ -69,7 +73,7 @@
 			if (position !== null) onplay(String(position));
 			return;
 		}
-		onplay(valveAnswer(held));
+		onplay(woodwind ? woodwindAnswer(woodwind.layout, held) : valveAnswer(held));
 	}
 
 	/** Start the next note with everything released. */
@@ -123,15 +127,16 @@
 	});
 
 	// After a miss the drawing shows what was played against what was right.
-	const shownHeld = $derived(reveal ? valvesIn(reveal.gave) : held);
-	const wantValves = $derived(reveal ? valvesIn(reveal.want) : null);
+	const readKeys = $derived(woodwind ? keysIn : valvesIn);
+	const shownHeld = $derived(reveal ? readKeys(reveal.gave) : held);
+	const wantValves = $derived(reveal ? readKeys(reveal.want) : null);
 </script>
 
 <svelte:window onkeydown={keydown} onkeyup={keyup} onblur={blur} />
 
-<div class="pad" class:wide={controls === 'piano' || controls === 'bars'}>
+<div class="pad" class:wide={info.wide}>
 	<!-- A keyboard needs the whole width; its picture would only crowd it. -->
-	{#if art && controls !== 'piano' && controls !== 'bars'}
+	{#if art && !info.wide}
 		<img class="art" src={art} alt="" />
 	{/if}
 
@@ -143,6 +148,13 @@
 				want={wantValves}
 				ontoggle={reveal || locked ? undefined : toggle}
 				{hints}
+			/>
+		{:else if woodwind}
+			<WoodwindKeys
+				layout={woodwind.layout}
+				held={shownHeld}
+				want={wantValves}
+				ontoggle={reveal || locked ? undefined : toggle}
 			/>
 		{:else if controls === 'slide'}
 			<Slide

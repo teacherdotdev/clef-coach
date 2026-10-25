@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { pitchClass, pitchName } from './music';
 	// A piano keyboard, or a row of bells laid out the same way: the naturals in
 	// a row in front and the sharps and flats in a row behind them. Clicking a
 	// key or bar is the whole answer.
@@ -34,7 +35,7 @@
 	// Which keys of an octave are black, and which white key each black one sits
 	// to the right of.
 	const BLACK = new Set([1, 3, 6, 8, 10]);
-	const isBlack = (p: number) => BLACK.has(((p % 12) + 12) % 12);
+	const isBlack = (p: number) => BLACK.has(pitchClass(p));
 
 	const WHITE_W = 24;
 	const WHITE_H = $derived(bars ? 70 : 110);
@@ -53,11 +54,6 @@
 		}
 		return { whites, blacks, width: n * WHITE_W };
 	});
-
-	const NAMES = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
-	function name(p: number): string {
-		return `${NAMES[((p % 12) + 12) % 12]}${Math.floor(p / 12)}`;
-	}
 
 	function state(p: number): 'right' | 'wrong' | 'struck' | null {
 		if (want !== null && p === want) return 'right';
@@ -105,7 +101,7 @@
 			rx={bars ? 4 : 3}
 			role={interactive ? 'button' : 'img'}
 			tabindex={interactive ? 0 : undefined}
-			aria-label={name(k.pitch)}
+			aria-label={pitchName(k.pitch)}
 			onclick={() => onstrike?.(k.pitch)}
 			onkeydown={(e) => onkey(e, k.pitch)}
 		/>
@@ -128,7 +124,7 @@
 			rx={bars ? 4 : 2}
 			role={interactive ? 'button' : 'img'}
 			tabindex={interactive ? 0 : undefined}
-			aria-label={name(k.pitch)}
+			aria-label={pitchName(k.pitch)}
 			onclick={() => onstrike?.(k.pitch)}
 			onkeydown={(e) => onkey(e, k.pitch)}
 		/>

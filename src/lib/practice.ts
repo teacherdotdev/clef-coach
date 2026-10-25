@@ -10,7 +10,14 @@ import {
 	type BandInstrument,
 	type Controls
 } from './band';
-import { parseNoteName, pitchInKey, type Accidental, type Clef, type KeyId } from './music';
+import {
+	parseNoteName,
+	pitchClass,
+	pitchInKey,
+	type Accidental,
+	type Clef,
+	type KeyId
+} from './music';
 import { PIANO_HIGHEST, PIANO_LEVELS, PIANO_LOWEST } from './piano';
 import type { Settings } from './settings';
 
@@ -84,5 +91,5 @@ export function pianoPractice(s: Settings): Practice {
 export function keyboardSpan(staves: Stave[], key: KeyId): { low: number; high: number } {
 	const low = Math.min(...staves.map((s) => pitchInKey(s.low, key, 'flat')));
 	const high = Math.max(...staves.map((s) => pitchInKey(s.high, key, 'sharp')));
-	return { low: low - (((low % 12) + 12) % 12), high: high + 11 - (((high % 12) + 12) % 12) };
+	return { low: low - pitchClass(low), high: high + 11 - pitchClass(high) };
 }
