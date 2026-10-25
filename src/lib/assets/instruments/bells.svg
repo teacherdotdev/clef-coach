@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 96">
+<!-- Orchestra bells (glockenspiel bell kit) for Clef Coach: an open dark-wood case seen from the front and above, two rows of silver bars (naturals in front, sharps behind in a 2-then-3 pattern) getting shorter to the right, and two red-headed mallets crossed in front. Cartoon style with a heavy ink outline to match the logo. -->
+<path d="M9 6 L119 18 Q123 18.5 123 23 L123 76 Q123 80 119 80 L9 80 Q5 80 5 76 L5 10 Q5 5.5 9 6 Z" fill="#6b4a33" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M12 12.5 L114 23.5 Q117 24 117 27 L117 69 L11 69 L11 14 Q11 12.4 12 12.5 Z" fill="#3b2a10" opacity="0.35"/>
+<path d="M5 72 L123 72 L123 76 Q123 80 119 80 L9 80 Q5 80 5 76 Z" fill="#3b2a10" opacity="0.3"/>
+<rect x="17" y="14" width="12" height="20" rx="2.5" fill="#aeb6c4" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="17" y="14" width="12" height="14" rx="2.5" fill="#d9dee7" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="31" y="16" width="12" height="20" rx="2.5" fill="#aeb6c4" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="31" y="16" width="12" height="14" rx="2.5" fill="#d9dee7" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="59" y="19.5" width="12" height="20.5" rx="2.5" fill="#aeb6c4" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="59" y="19.5" width="12" height="14.5" rx="2.5" fill="#d9dee7" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="73" y="21.5" width="12" height="20.5" rx="2.5" fill="#aeb6c4" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="73" y="21.5" width="12" height="14.5" rx="2.5" fill="#d9dee7" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="87" y="23.5" width="12" height="20.5" rx="2.5" fill="#aeb6c4" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="87" y="23.5" width="12" height="14.5" rx="2.5" fill="#d9dee7" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="10" y="38" width="12" height="28" rx="2.5" fill="#aeb6c4" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="10" y="38" width="12" height="22" rx="2.5" fill="#d9dee7" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="24" y="40" width="12" height="26" rx="2.5" fill="#aeb6c4" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="24" y="40" width="12" height="20" rx="2.5" fill="#d9dee7" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="38" y="42" width="12" height="24" rx="2.5" fill="#aeb6c4" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="38" y="42" width="12" height="18" rx="2.5" fill="#d9dee7" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="52" y="44" width="12" height="22" rx="2.5" fill="#aeb6c4" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="52" y="44" width="12" height="16" rx="2.5" fill="#d9dee7" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="66" y="46" width="12" height="20" rx="2.5" fill="#aeb6c4" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="66" y="46" width="12" height="14" rx="2.5" fill="#d9dee7" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="80" y="48" width="12" height="18" rx="2.5" fill="#aeb6c4" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="80" y="48" width="12" height="12" rx="2.5" fill="#d9dee7" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="94" y="50" width="12" height="16" rx="2.5" fill="#aeb6c4" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="94" y="50" width="12" height="10" rx="2.5" fill="#d9dee7" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="108" y="52" width="12" height="14" rx="2.5" fill="#aeb6c4" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="108" y="52" width="12" height="8" rx="2.5" fill="#d9dee7" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M14 91 L90 70" stroke="#3b2a10" stroke-width="7.5" stroke-linecap="round"/>
+<path d="M14 91 L90 70" stroke="#d9a066" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="90" cy="70" r="8.5" fill="#e4572e" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="87" cy="67" r="2.5" fill="#ffffff" opacity="0.5"/>
+<path d="M116 91 L42 70" stroke="#3b2a10" stroke-width="7.5" stroke-linecap="round"/>
+<path d="M116 91 L42 70" stroke="#d9a066" stroke-width="2.5" stroke-linecap="round"/>
+<circle cx="42" cy="70" r="8.5" fill="#e4572e" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="39" cy="67" r="2.5" fill="#ffffff" opacity="0.5"/>
+</svg>

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- French horn, side view: two round coils of tubing, a big flared bell out to the lower right, three rotary-valve paddles, mouthpiece at the upper left. -->
+  <!-- bell flare (behind the coil so the tubing runs into it) -->
+  <path d="M48 89.5 C 82 89.5, 104 74, 112 52 L 112 112 C 102 101, 82 98.5, 48 98.5 Z" fill="#f2b632" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M60 98.5 C 84 98.5, 102 101, 112 112 L 112 92 C 100 94, 84 95, 60 95 Z" fill="#3b2a10" opacity="0.2"/>
+  <path d="M74 88 C 90 85, 100 76, 105 66" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.45"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- inner loop (further back, shaded) -->
+    <circle cx="48" cy="54" r="22" stroke="#3b2a10" stroke-width="12"/>
+    <circle cx="48" cy="54" r="22" stroke="#f2b632" stroke-width="6"/>
+    <circle cx="48" cy="54" r="22" stroke="#3b2a10" stroke-width="6" opacity="0.2"/>
+    <!-- outer loop -->
+    <circle cx="48" cy="54" r="39" stroke="#3b2a10" stroke-width="12"/>
+    <circle cx="48" cy="54" r="39" stroke="#f2b632" stroke-width="6"/>
+    <!-- leadpipe -->
+    <path d="M14 20 L38 44" stroke="#3b2a10" stroke-width="11"/>
+    <path d="M14 20 L38 44" stroke="#f2b632" stroke-width="5"/>
+  </g>
+  <!-- mouthpiece -->
+  <path d="M7 13 L14 20" stroke="#3b2a10" stroke-width="11" stroke-linecap="round"/>
+  <path d="M7 13 L14 20" stroke="#fbf3dc" stroke-width="5" stroke-linecap="round"/>
+  <!-- bell rim and opening -->
+  <ellipse cx="112" cy="82" rx="10" ry="30" fill="#f2b632" stroke="#3b2a10" stroke-width="3"/>
+  <ellipse cx="113" cy="82" rx="6" ry="25" fill="#3b2a10" opacity="0.25"/>
+  <!-- rotors -->
+  <circle cx="38" cy="50" r="6" fill="#f2b632" stroke="#3b2a10" stroke-width="3"/>
+  <circle cx="44" cy="61" r="6" fill="#f2b632" stroke="#3b2a10" stroke-width="3"/>
+  <circle cx="51" cy="71" r="6" fill="#f2b632" stroke="#3b2a10" stroke-width="3"/>
+  <!-- paddles -->
+  <rect x="20" y="52" width="17" height="6" rx="3" fill="#fbf3dc" stroke="#3b2a10" stroke-width="3"/>
+  <rect x="26" y="63" width="19" height="6" rx="3" fill="#fbf3dc" stroke="#3b2a10" stroke-width="3"/>
+  <rect x="33" y="74" width="17" height="6" rx="3" fill="#fbf3dc" stroke="#3b2a10" stroke-width="3"/>
+</svg>

@@ -1,7 +1,17 @@
 // Turns the activity settings into URL text (for a shareable link) and back.
 
 import {
+	ALL_BAND_INSTRUMENTS,
+	ALL_CONCERT_KEYS,
+	ALL_LEVELS,
+	type BandInstrument,
+	type ConcertKey,
+	type Level,
+	type Range
+} from './band';
+import {
 	ALL_KEYS,
+	STRING_KEYS,
 	noteName,
 	parseNoteName,
 	type Clef,
@@ -24,8 +34,27 @@ import {
 	type PositionId,
 	type PositionSystem
 } from './strings';
+import { ALL_PIANO_CLEFS, type PianoClefs } from './piano';
+
+/**
+ * What the activity is for, which decides who picks the instrument: the
+ * teacher (strings), each student (band), or nobody (piano).
+ */
+export type ActivityType = 'strings' | 'band' | 'piano';
+
+export const ALL_ACTIVITY_TYPES: ActivityType[] = ['strings', 'band', 'piano'];
+
+export const ACTIVITY_TYPE_NAMES: Record<ActivityType, string> = {
+	strings: 'Strings',
+	band: 'Band',
+	piano: 'Piano'
+};
 
 export interface Settings {
+	activity: ActivityType;
+	// Shown to the student and printed on their PDF, so the activity can be
+	// handed out as homework. Empty for an ordinary practice link.
+	title: string;
 	clefs: Clef[];
 	rangeLow: string; // e.g. 'A3'
 	rangeHigh: string; // e.g. 'C6'
@@ -52,6 +81,24 @@ export interface Settings {
 	// End the challenge with a breakdown of the notes that went wrong, so the
 	// teacher can see what a student is struggling with and not just how much.
 	detailedReport: boolean;
+
+	// --- band and piano ---
+	level: Level;
+	// Ask the student to name the note before they play it. Bells never ask:
+	// striking the bar already names it.
+	askName: boolean;
+	concertKey: ConcertKey; // band: each instrument reads it in its own key
+	bandInstruments: BandInstrument[]; // the instruments the student may pick
+	// A teacher's own range for an instrument, in place of the level's.
+	rangeOverrides: Partial<Record<BandInstrument, Range>>;
+	pianoClefs: PianoClefs;
+}
+
+export const MAX_TITLE_LENGTH = 80;
+
+/** Naming the note is on by default for band and off for piano. */
+export function defaultAskName(activity: ActivityType): boolean {
+	return activity !== 'piano';
 }
 
 const ALL_VALUES: NoteValue[] = ['whole', 'half', 'quarter'];
@@ -88,8 +135,27 @@ export const DEFAULT_SETTINGS: Settings = {
 	fingers: [...FINGER_SETS[DEFAULT_INSTRUMENT]],
 	questionLimit: 0,
 	timeLimitSec: 0,
-	detailedReport: false
+	detailedReport: false,
+	activity: 'strings',
+	title: '',
+	level: 'beginner',
+	askName: true,
+	concertKey: 'Bb',
+	bandInstruments: [...ALL_BAND_INSTRUMENTS],
+	rangeOverrides: {},
+	pianoClefs: 'treble'
 };
+
+/**
+ * Switching activity type keeps everything that still applies — the note
+ * values, the challenge limits, the title — and gives the new type its own
+ * defaults for the rest. A piano activity keeps a key, so one carried over from
+ * strings stays; a band activity is keyed in concert pitch instead.
+ */
+export function applyActivityType(s: Settings, activity: ActivityType): Settings {
+	if (activity === s.activity) return s;
+	return { ...s, activity, askName: defaultAskName(activity) };
+}
 
 function defaultFingerSettings(inst: Instrument, key: KeyId): FingeringOptions {
 	return { key, positions: DEFAULT_BASS_POSITIONS, fingers: [...FINGER_SETS[inst]] };
@@ -195,6 +261,23 @@ export function settingsToQuery(s: Settings): string {
 	p.set('qlim', String(s.questionLimit));
 	p.set('tsec', String(s.timeLimitSec));
 	p.set('rep', s.detailedReport ? '1' : '0');
+	// String links are written exactly as they always were, so a student's
+	// high score for one is still found under the same link.
+	if (s.activity !== 'strings') {
+		p.set('act', s.activity);
+		p.set('lvl', s.level);
+		p.set('askname', s.askName ? '1' : '0');
+	}
+	if (s.activity === 'band') {
+		p.set('ckey', s.concertKey);
+		p.set('binst', s.bandInstruments.join(','));
+		const overrides = ALL_BAND_INSTRUMENTS.filter((i) => s.rangeOverrides[i]).map(
+			(i) => `${i}.${s.rangeOverrides[i]!.low}-${s.rangeOverrides[i]!.high}`
+		);
+		if (overrides.length) p.set('ovr', overrides.join(','));
+	}
+	if (s.activity === 'piano') p.set('pclef', s.pianoClefs);
+	if (s.title.trim()) p.set('title', s.title.trim());
 	return p.toString();
 }
 
@@ -224,8 +307,19 @@ export function settingsFromParams(params: URLSearchParams): Settings {
 			SYSTEM_POSITIONS[positionSystem].includes(p as PositionId)
 	);
 
+	const rawActivity = params.get('act');
+	const activity: ActivityType = ALL_ACTIVITY_TYPES.includes(rawActivity as ActivityType)
+		? (rawActivity as ActivityType)
+		: d.activity;
+
+	// A piano reads in any key; the string activities offer their own seven.
 	const rawKey = params.get('key');
-	const key: KeyId = ALL_KEYS.includes(rawKey as KeyId) ? (rawKey as KeyId) : d.key;
+	const keys = activity === 'piano' ? ALL_KEYS : STRING_KEYS;
+	const key: KeyId = keys.includes(rawKey as KeyId) ? (rawKey as KeyId) : d.key;
+
+	const bandInstruments = csv(params.get('binst')).filter((i): i is BandInstrument =>
+		ALL_BAND_INSTRUMENTS.includes(i as BandInstrument)
+	);
 
 	// Only fingers this instrument has; links written before an instrument's
 	// fingers were nameable simply get the whole set.
@@ -256,8 +350,36 @@ export function settingsFromParams(params: URLSearchParams): Settings {
 		fingers: fingers.length ? fingers : [...FINGER_SETS[instrument]],
 		questionLimit: clampLimit(params.get('qlim')),
 		timeLimitSec: readTimeLimit(params),
-		detailedReport: bool(params.get('rep'), d.detailedReport)
+		detailedReport: bool(params.get('rep'), d.detailedReport),
+		activity,
+		title: (params.get('title') ?? '').trim().slice(0, MAX_TITLE_LENGTH),
+		level: oneOf(params.get('lvl'), ALL_LEVELS, d.level),
+		askName: bool(params.get('askname'), defaultAskName(activity)),
+		concertKey: oneOf(params.get('ckey'), ALL_CONCERT_KEYS, d.concertKey),
+		// Keep the list in the picker's order, whatever order the link has it in.
+		bandInstruments: bandInstruments.length
+			? ALL_BAND_INSTRUMENTS.filter((i) => bandInstruments.includes(i))
+			: d.bandInstruments,
+		rangeOverrides: readOverrides(params.get('ovr')),
+		pianoClefs: oneOf(params.get('pclef'), ALL_PIANO_CLEFS, d.pianoClefs)
 	};
+}
+
+// "trumpet.C4-C6,horn.F4-F5" → a range per instrument. Anything unreadable is
+// dropped, leaving that instrument on its level's range.
+function readOverrides(v: string | null): Partial<Record<BandInstrument, Range>> {
+	const out: Partial<Record<BandInstrument, Range>> = {};
+	for (const part of csv(v)) {
+		const m = part.match(/^(\w+)\.([A-G]\d)-([A-G]\d)$/);
+		if (!m || !ALL_BAND_INSTRUMENTS.includes(m[1] as BandInstrument)) continue;
+		const [low, high] = [m[2], m[3]].sort((a, b) => parseNoteName(a) - parseNoteName(b));
+		out[m[1] as BandInstrument] = { low, high };
+	}
+	return out;
+}
+
+function oneOf<T extends string>(v: string | null, allowed: T[], fallback: T): T {
+	return allowed.includes(v as T) ? (v as T) : fallback;
 }
 
 /**
@@ -300,6 +422,20 @@ export function settingsFromJson(raw: unknown): Settings {
 	put('qlim', o.questionLimit);
 	put('tsec', o.timeLimitSec);
 	putBool('rep', o.detailedReport);
+	put('act', o.activity);
+	put('title', o.title);
+	put('lvl', o.level);
+	putBool('askname', o.askName);
+	put('ckey', o.concertKey);
+	put('binst', o.bandInstruments);
+	put('pclef', o.pianoClefs);
+	if (o.rangeOverrides && typeof o.rangeOverrides === 'object') {
+		const entries = Object.entries(o.rangeOverrides as Record<string, Partial<Range>>);
+		put(
+			'ovr',
+			entries.filter(([, r]) => r && r.low && r.high).map(([i, r]) => `${i}.${r.low}-${r.high}`)
+		);
+	}
 
 	// A range from an older file may name notes this instrument cannot reach.
 	return clampRange(settingsFromParams(p));

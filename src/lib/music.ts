@@ -47,44 +47,52 @@ export const CLEF_NAMES: Record<Clef, string> = {
 // Key signatures
 // ---------------------------------------------------------------------------
 
-// The keys a beginning string player meets first. A key signature never changes
-// a note's letter or where it sits on the staff — it shifts the pitch, which is
-// why it changes the fingering and not the answer to "name this note".
-export type KeyId = 'C' | 'G' | 'D' | 'A' | 'F' | 'Bb' | 'Eb';
+// Every key a note can be written in. A key signature never changes a note's
+// letter or where it sits on the staff — it shifts the pitch, which is why it
+// changes the fingering and not the answer to "name this note".
+//
+// The string activities offer the first seven, the keys a beginning string
+// player meets first. Band music is chosen in concert pitch, and transposing
+// the band keys for each instrument reaches as far as five flats (D♭ major on
+// flute) and four sharps (E major on alto sax), which is where the rest come
+// from.
+export type KeyId = 'C' | 'G' | 'D' | 'A' | 'E' | 'F' | 'Bb' | 'Eb' | 'Ab' | 'Db';
 
-export const ALL_KEYS: KeyId[] = ['C', 'G', 'D', 'A', 'F', 'Bb', 'Eb'];
+export const ALL_KEYS: KeyId[] = ['C', 'G', 'D', 'A', 'E', 'F', 'Bb', 'Eb', 'Ab', 'Db'];
+
+/** The keys a string activity offers. */
+export const STRING_KEYS: KeyId[] = ['C', 'G', 'D', 'A', 'F', 'Bb', 'Eb'];
 
 export const KEY_NAMES: Record<KeyId, string> = {
 	C: 'C major',
 	G: 'G major',
 	D: 'D major',
 	A: 'A major',
+	E: 'E major',
 	F: 'F major',
 	Bb: 'B♭ major',
-	Eb: 'E♭ major'
+	Eb: 'E♭ major',
+	Ab: 'A♭ major',
+	Db: 'D♭ major'
 };
+
+// Sharps and flats are always added in the same order, so each key's
+// signature is the first few of these.
+const SHARP_ORDER = ['F', 'C', 'G', 'D', 'A', 'E', 'B'];
+const FLAT_ORDER = ['B', 'E', 'A', 'D', 'G', 'C', 'F'];
+
+const SHARP_COUNT: Partial<Record<KeyId, number>> = { G: 1, D: 2, A: 3, E: 4 };
+const FLAT_COUNT: Partial<Record<KeyId, number>> = { F: 1, Bb: 2, Eb: 3, Ab: 4, Db: 5 };
 
 /** Letters the key sharpens, in the order the sharps are written on the staff. */
-export const KEY_SHARPS: Record<KeyId, string[]> = {
-	C: [],
-	G: ['F'],
-	D: ['F', 'C'],
-	A: ['F', 'C', 'G'],
-	F: [],
-	Bb: [],
-	Eb: []
-};
+export const KEY_SHARPS = Object.fromEntries(
+	ALL_KEYS.map((k) => [k, SHARP_ORDER.slice(0, SHARP_COUNT[k] ?? 0)])
+) as Record<KeyId, string[]>;
 
 /** Letters the key flattens, in the order the flats are written on the staff. */
-export const KEY_FLATS: Record<KeyId, string[]> = {
-	C: [],
-	G: [],
-	D: [],
-	A: [],
-	F: ['B'],
-	Bb: ['B', 'E'],
-	Eb: ['B', 'E', 'A']
-};
+export const KEY_FLATS = Object.fromEntries(
+	ALL_KEYS.map((k) => [k, FLAT_ORDER.slice(0, FLAT_COUNT[k] ?? 0)])
+) as Record<KeyId, string[]>;
 
 /** Which accidental a key is written with. A key never mixes the two. */
 export function keyAccidental(key: KeyId): 'sharp' | 'flat' {
@@ -103,18 +111,18 @@ export function keyLetters(key: KeyId): string[] {
  * clef spells the same sharps in its own place.
  */
 export const SHARP_STEPS: Record<Clef, number[]> = {
-	treble: [8, 5, 9], // F5 top line, C5 third space, G5 above the top line
-	bass: [6, 3, 7], // F3 fourth line, C3 second space, G3 top space
-	alto: [7, 4, 8], // F4 top space, C4 middle line, G4 top line
-	tenor: [2, 6, 3] // F3 second line, C4 fourth line, G3 second space
+	treble: [8, 5, 9, 6, 3, 7, 4], // F5 top line, C5 third space, G5 above the top line, …
+	bass: [6, 3, 7, 4, 1, 5, 2], // F3 fourth line, C3 second space, G3 top space, …
+	alto: [7, 4, 8, 5, 2, 6, 3], // F4 top space, C4 middle line, G4 top line, …
+	tenor: [2, 6, 3, 7, 4, 8, 5] // F3 second line, C4 fourth line, G3 second space, …
 };
 
 /** The same, for flats, which sit lower on the staff than the sharps do. */
 export const FLAT_STEPS: Record<Clef, number[]> = {
-	treble: [4, 7, 3], // B4 middle line, E5 fourth space, A4 second space
-	bass: [2, 5, 1], // B2 second line, E3 third space, A2 first space
-	alto: [3, 6, 2], // B3 second space, E4 fourth line, A3 second line
-	tenor: [5, 8, 4] // B3 third space, E4 top line, A3 third line
+	treble: [4, 7, 3, 6, 2, 5, 1], // B4 middle line, E5 fourth space, A4 second space, …
+	bass: [2, 5, 1, 4, 0, 3, -1], // B2 second line, E3 third space, A2 first space, …
+	alto: [3, 6, 2, 5, 1, 4, 0], // B3 second space, E4 fourth line, A3 second line, …
+	tenor: [5, 8, 4, 7, 3, 6, 2] // B3 third space, E4 top line, A3 third line, …
 };
 
 /** Where this key's accidentals are written, in the order they are written. */
