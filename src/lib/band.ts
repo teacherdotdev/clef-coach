@@ -90,7 +90,7 @@ export const BAND_INSTRUMENTS: Record<BandInstrument, BandInstrumentDef> = {
 		levels: {
 			beginner: { low: 'C4', high: 'G4' },
 			intermediate: { low: 'A3', high: 'D5' },
-			advanced: { low: 'F3', high: 'C6' }
+			advanced: { low: 'G3', high: 'C6' }
 		}
 	},
 	horn: {
@@ -140,7 +140,7 @@ export const BAND_INSTRUMENTS: Record<BandInstrument, BandInstrumentDef> = {
 		levels: {
 			beginner: { low: 'C4', high: 'G4' },
 			intermediate: { low: 'G3', high: 'D5' },
-			advanced: { low: 'F3', high: 'G5' }
+			advanced: { low: 'G3', high: 'G5' }
 		}
 	},
 	tuba: {

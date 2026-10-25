@@ -49,7 +49,7 @@ to hand in, and students can hide their score.
 13. As a band student, I want to change my instrument, so that I can fix a wrong pick or practise a second instrument.
 14. As a band student, I want to see notes in my own written key and clef, so that the staff looks like my music.
 15. As a trumpet, baritone or tuba student, I want to press valve buttons on a picture of my valves, so that answering feels like playing.
-16. As a brass student on a computer, I want to hold J, K and L for valves 1, 2 and 3 and press Enter to play, so that it feels like pressing real valves.
+16. As a brass student on a computer, I want to hold J, K and L for valves 1, 2 and 3 (on horn, played left-handed: F, D and S, with Space for the trigger) and press Enter to play, so that it feels like pressing real valves.
 17. As a horn student, I want a thumb trigger as well as three valves, so that I can answer with either side of my double horn.
 18. As a trombone student, I want to move the slide to a numbered position (or press 1–7), so that I answer in positions as I play.
 19. As a bells student, I want to click the bar on a picture of my bells, so that I find the note where it really is.
@@ -122,13 +122,14 @@ to hand in, and students can hide their score.
   includes the score.
 - **The band picker** remembers the student's choice on the device and is skipped
   when only one instrument is ticked.
-- **The fingering chart page** lists every instrument; for each it shows each
-  note of its Advanced range on the staff next to its fingerings drawn small.
+- **The fingering chart page** lists every valve and slide instrument (bells
+  are answered by the bar itself, so have nothing to check); for each it shows
+  every note its chart covers on the staff next to its fingerings drawn small.
 
 ## Testing Decisions
 
-- The project has no tests yet. Bun's built-in test runner is used, so no
-  dependency is added.
+- The project has no tests yet. Bun's built-in test runner is used; the only
+  addition is its type definitions, as a development dependency.
 - Tests check behaviour through the highest seams, the pure modules, never
   component internals:
   - **Band module:** written key for every concert key and transposition; every

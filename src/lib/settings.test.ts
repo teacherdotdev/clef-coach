@@ -101,3 +101,14 @@ describe('key signatures', () => {
 			}
 	});
 });
+
+describe('range overrides', () => {
+	test('a range the instrument cannot reach is kept inside its chart, or dropped', () => {
+		const s = settingsFromParams(
+			new URLSearchParams('act=band&ovr=trumpet.C1-C2,tuba.A1-C6,horn.C4-C5')
+		);
+		expect(s.rangeOverrides.trumpet).toBeUndefined();
+		expect(s.rangeOverrides.tuba).toEqual({ low: 'A1', high: 'B3' });
+		expect(s.rangeOverrides.horn).toEqual({ low: 'C4', high: 'C5' });
+	});
+});

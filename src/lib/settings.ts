@@ -4,6 +4,7 @@ import {
 	ALL_BAND_INSTRUMENTS,
 	ALL_CONCERT_KEYS,
 	ALL_LEVELS,
+	chartRange,
 	type BandInstrument,
 	type ConcertKey,
 	type Level,
@@ -148,9 +149,9 @@ export const DEFAULT_SETTINGS: Settings = {
 
 /**
  * Switching activity type keeps everything that still applies — the note
- * values, the challenge limits, the title — and gives the new type its own
- * defaults for the rest. A piano activity keeps a key, so one carried over from
- * strings stays; a band activity is keyed in concert pitch instead.
+ * values, the challenge limits, the title, and each type's own settings, so
+ * switching back finds them as they were. Only the note-name question resets,
+ * since band asks it by default and piano does not.
  */
 export function applyActivityType(s: Settings, activity: ActivityType): Settings {
 	if (activity === s.activity) return s;
@@ -365,15 +366,20 @@ export function settingsFromParams(params: URLSearchParams): Settings {
 	};
 }
 
-// "trumpet.C4-C6,horn.F4-F5" → a range per instrument. Anything unreadable is
-// dropped, leaving that instrument on its level's range.
+// "trumpet.C4-C6,horn.F4-F5" → a range per instrument, kept inside what the
+// instrument plays. Anything unreadable, or entirely out of reach, is dropped,
+// leaving that instrument on its level's range.
 function readOverrides(v: string | null): Partial<Record<BandInstrument, Range>> {
 	const out: Partial<Record<BandInstrument, Range>> = {};
 	for (const part of csv(v)) {
 		const m = part.match(/^(\w+)\.([A-G]\d)-([A-G]\d)$/);
 		if (!m || !ALL_BAND_INSTRUMENTS.includes(m[1] as BandInstrument)) continue;
-		const [low, high] = [m[2], m[3]].sort((a, b) => parseNoteName(a) - parseNoteName(b));
-		out[m[1] as BandInstrument] = { low, high };
+		const inst = m[1] as BandInstrument;
+		const reach = chartRange(inst);
+		const [a, b] = [parseNoteName(m[2]), parseNoteName(m[3])].sort((x, y) => x - y);
+		const low = Math.max(a, parseNoteName(reach.low));
+		const high = Math.min(b, parseNoteName(reach.high));
+		if (low < high) out[inst] = { low: noteName(low), high: noteName(high) };
 	}
 	return out;
 }

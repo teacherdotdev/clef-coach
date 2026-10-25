@@ -79,7 +79,8 @@
 	);
 	// The key every staff is drawn in and every note is read in.
 	const keySig = $derived(practice?.key ?? settings.key);
-	// The keys or bars a keyboard instrument draws.
+	// The keys or bars a keyboard instrument draws. The strings never draw
+	// any; the two octaves from middle C only keep the type simple.
 	const span = $derived(
 		practice ? keyboardSpan(practice.staves, practice.key) : { low: 48, high: 71 }
 	);
@@ -484,13 +485,14 @@
 		return describeBandFingering(practice.instrument, answer);
 	}
 
-	const KEY_NAMES = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
+	// The twelve keys of an octave, for naming a key the student struck.
+	const PITCH_NAMES = ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'];
 	function keyName(answer: string): string {
 		const p = Number(answer);
 		// The note being asked keeps its own spelling: B♭, not A♯.
 		if (p === pitchInKey(current.index, keySig, written))
 			return `${noteLabel(keySig, current.note.letter, written)}${current.note.octave}`;
-		return `${KEY_NAMES[((p % 12) + 12) % 12]}${Math.floor(p / 12)}`;
+		return `${PITCH_NAMES[((p % 12) + 12) % 12]}${Math.floor(p / 12)}`;
 	}
 
 	const playPrompt = $derived(
@@ -880,11 +882,19 @@
 				<p>{title}</p>
 				<p>{finishedAt.toLocaleString()}</p>
 				<p>Finished: {completed} note{completed === 1 ? '' : 's'} in {formatTime(elapsedMs)}</p>
+				{#if settings.title}
+					<p>Assignment goal met ✓</p>
+				{/if}
 				<!-- The teacher sees the score even when the student hid it. -->
 				{#if !showScore}
 					<p>Score: {correct}/{attempted} ({percent}% correct)</p>
 				{/if}
 			</div>
+			<!-- Reaching the results means the challenge's limit was reached, which
+			     for an assignment is its goal. -->
+			{#if settings.title}
+				<p class="goal no-print">✓ {settings.title} — goal met</p>
+			{/if}
 			{#if showScore}
 				<h2 class:high={isHighScore}>{isHighScore ? 'New High Score!' : 'Challenge complete'}</h2>
 				<p class="bigscore">{correct}/{attempted}</p>
@@ -1017,6 +1027,11 @@
 	/* The two staves of a grand staff sit close, as on a piano part. */
 	.grand :global(.staff + .staff) {
 		margin-top: -18%;
+	}
+	.goal {
+		margin: 0;
+		font-weight: 700;
+		color: #15803d;
 	}
 	.assignment {
 		margin: 0 0 0.25rem;

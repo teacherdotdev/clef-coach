@@ -65,8 +65,9 @@ pressed in does not matter. On piano and mallets it is the key or bar struck.
 
 The clickable picture of an instrument that the student answers on. Clicking a
 key or valve presses or releases it; **Play** submits what is held down. Brass
-can also be played from the computer keyboard (J K L for valves 1 2 3, Space to
-play). The string instruments keep their button answers as an alternative to
+can also be played from the computer keyboard: hold J K L for valves 1 2 3 (the
+horn, played left-handed, uses F D S and Space for the thumb trigger) and press
+Enter to play. Piano keys and bells are played the moment they are clicked. The string instruments keep their button answers as an alternative to
 their drawings.
 
 ## Instrument choices

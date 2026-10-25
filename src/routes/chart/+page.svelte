@@ -21,21 +21,23 @@
 
 	let shown = $state<BandInstrument>('trumpet');
 
-	// Black keys are spelled as sharps here; a flat plays the same way.
+	// Black keys are spelled the way band music most often writes them; the
+	// other spelling plays the same way.
 	const SPELLING: [string, Accidental | null][] = [
 		['C', null],
 		['C', 'sharp'],
 		['D', null],
-		['D', 'sharp'],
+		['E', 'flat'],
 		['E', null],
 		['F', null],
 		['F', 'sharp'],
 		['G', null],
-		['G', 'sharp'],
+		['A', 'flat'],
 		['A', null],
-		['A', 'sharp'],
+		['B', 'flat'],
 		['B', null]
 	];
+	const SIGNS = { sharp: '♯', flat: '♭', natural: '♮' };
 
 	function noteFor(pitch: number): Note {
 		const [letter, accidental] = SPELLING[((pitch % 12) + 12) % 12];
@@ -44,7 +46,7 @@
 
 	function name(pitch: number): string {
 		const [letter, accidental] = SPELLING[((pitch % 12) + 12) % 12];
-		return `${letter}${accidental ? '♯' : ''}${Math.floor(pitch / 12)}`;
+		return `${letter}${accidental ? SIGNS[accidental] : ''}${Math.floor(pitch / 12)}`;
 	}
 
 	const rows = $derived(
