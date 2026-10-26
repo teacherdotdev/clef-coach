@@ -12,7 +12,7 @@
 	// Band and piano questions end with the student playing the note on a
 	// drawing of their instrument instead. A wrong fingering stays on the drawing
 	// until they move on, since a fingering takes longer to take in than a word.
-	import { onDestroy, onMount, tick } from 'svelte';
+	import { onDestroy, onMount, tick, untrack } from 'svelte';
 	import Fingerboard from './Fingerboard.svelte';
 	import FingeringPicture from './FingeringPicture.svelte';
 	import PlayPad from './PlayPad.svelte';
@@ -249,14 +249,17 @@
 	}
 
 	// --- run state ---
-	let phase = $state<'ready' | 'running' | 'done'>(isChallengeMode(settings) ? 'ready' : 'running');
-	let current = $state(newQuestion());
+	let phase = $state<'ready' | 'running' | 'done'>(
+		untrack(() => isChallengeMode(settings)) ? 'ready' : 'running'
+	);
+	const first = newQuestion();
+	let current = $state(first);
 	let step = $state<StepId>(firstStep());
 	// Every fingering still consistent with what the student has answered so far.
-	let options = $state<Fingering[]>(optionsFor(current.index, current.note.accidental));
+	let options = $state<Fingering[]>(optionsFor(first.index, first.note.accidental));
 	// A band or piano note's right answers, and — after a wrong one — what was
 	// played against what was right, shown on the drawing until Next.
-	let plays = $state<string[]>(playsFor(current));
+	let plays = $state<string[]>(playsFor(first));
 	let reveal = $state<{ gave: string; want: string } | null>(null);
 	let pad = $state<PlayPad>();
 	/** The sign in front of the note being asked, if there is one. */
