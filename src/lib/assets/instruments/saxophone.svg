@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120">
+  <!-- Alto saxophone (also tenor and baritone), leaning slightly: one conical brass tube with a row of pearl key buttons down the front, a U-bend at the bottom, a flared bell opening up and forward, and a thin curved neck off the top to a black mouthpiece with a silver ligature. No valves. -->
+  <!-- neck and mouthpiece -->
+  <g fill="none" stroke-linecap="round">
+    <path d="M42 28.5 C 39 14.5, 32 10, 20.5 12.5" stroke="#3b2a10" stroke-width="11"/>
+    <path d="M42 28.5 C 39 14.5, 32 10, 20.5 12.5" stroke="#f2b632" stroke-width="5"/>
+    <path d="M20.5 12.5 L 9.5 19" stroke="#3b2a10" stroke-width="12"/>
+    <path d="M20.5 12.5 L 9.5 19" stroke="#2f3140" stroke-width="6"/>
+    <path d="M19.5 13 L 16.5 14.5" stroke="#d9dee7" stroke-width="6" stroke-linecap="butt"/>
+  </g>
+  <!-- body, bow and bell tube -->
+  <path d="M36 27.5 L 43.5 97.5 C 48.5 120, 98.5 111.5, 93.5 87 L 87.5 55.5 C 86 43.5, 89.5 34.5, 93 28 L 59.5 24.5 C 66.5 33.5, 69.5 43, 72.5 56.5 L 79.5 88 C 82 99.5, 66 103, 63.5 91.5 L 46.5 25.5 Z" fill="#f2b632"/>
+  <path d="M93 28 C 89.5 34.5, 86 43.5, 87.5 55.5 L 93.5 87 C 98.5 111.5, 48.5 120, 43.5 97.5 L 43 95.5 C 50.5 110.5, 89 104.5, 87.5 88.5 L 82 57 C 81 47, 83 38, 87.5 31 Z" fill="#3b2a10" opacity="0.2"/>
+  <path d="M42 28.5 L 46.5 25.5 L 63.5 91.5 L 59 93.5 Z" fill="#3b2a10" opacity="0.2"/>
+  <path d="M82.5 83 L 76.5 56 C 74.5 46, 72 38.5, 67.5 33" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.45"/>
+  <path d="M36 27.5 L 43.5 97.5 C 48.5 120, 98.5 111.5, 93.5 87 L 87.5 55.5 C 86 43.5, 89.5 34.5, 93 28 L 59.5 24.5 C 66.5 33.5, 69.5 43, 72.5 56.5 L 79.5 88 C 82 99.5, 66 103, 63.5 91.5 L 46.5 25.5 Z" fill="none" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round"/>
+  <!-- bell rim -->
+  <ellipse cx="76.5" cy="26" rx="17" ry="6.5" transform="rotate(6 76.5 26)" fill="#f2b632" stroke="#3b2a10" stroke-width="3"/>
+  <ellipse cx="77" cy="26.5" rx="12.5" ry="3.5" transform="rotate(6 77 26.5)" fill="#3b2a10" opacity="0.3"/>
+  <!-- neck receiver band -->
+  <path d="M34 25 L 47 22.5 L 48.5 29 L 35.5 32 Z" fill="#f2b632" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round"/>
+  <!-- pearl buttons -->
+  <g fill="#fbf3dc" stroke="#3b2a10" stroke-width="2.5">
+    <circle cx="43.5" cy="40.5" r="4"/>
+    <circle cx="45.5" cy="51" r="4"/>
+    <circle cx="47" cy="62" r="4"/>
+    <circle cx="50" cy="77" r="4"/>
+    <circle cx="52" cy="87.5" r="4"/>
+  </g>
+</svg>

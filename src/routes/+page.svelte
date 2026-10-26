@@ -1,0 +1,1649 @@
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import { resolve } from '$app/paths';
+	import { env } from '$env/dynamic/public';
+	import {
+		ALL_BAND_INSTRUMENTS,
+		ALL_CONCERT_KEYS,
+		ALL_LEVELS,
+		BAND_INSTRUMENTS,
+		bandRange,
+		chartRange,
+		CONCERT_KEY_NAMES,
+		LEVEL_NAMES,
+		writtenKey,
+		type BandInstrument
+	} from '$lib/band';
+	import { instrumentArt } from '$lib/instrumentArt';
+	import { ALL_PIANO_CLEFS, PIANO_CLEF_NAMES } from '$lib/piano';
+	import {
+		ALL_KEYS,
+		STRING_KEYS,
+		CLEF_NAMES,
+		KEY_NAMES,
+		parseNoteName,
+		type KeyId,
+		type NoteValue
+	} from '$lib/music';
+	import {
+		ACTIVITY_TYPE_NAMES,
+		applyActivityType,
+		applyInstrument,
+		applyPositionSystem,
+		MAX_TITLE_LENGTH,
+		clampRange,
+		parseActivities,
+		DEFAULT_SETTINGS,
+		fingeringOptions,
+		MAX_QUESTIONS,
+		MAX_SECONDS,
+		nameFromJson,
+		settingsFromJson,
+		settingsToQuery,
+		asksPosition,
+		usesPositions,
+		type ActivityType,
+		type Settings
+	} from '$lib/settings';
+	import {
+		fromQuery,
+		loadPresets,
+		loadQrOpen,
+		loadWorking,
+		newId,
+		saveQrOpen,
+		sameSettings,
+		savePresets,
+		saveWorking,
+		type Preset
+	} from '$lib/presets';
+	import {
+		ALL_INSTRUMENTS,
+		ALL_POSITION_SYSTEMS,
+		FINGERS,
+		FINGER_SETS,
+		INSTRUMENT_NAMES,
+		INSTRUMENTS,
+		playableNotes,
+		playableRange,
+		positionLabel,
+		positionName,
+		POSITION_SYSTEM_NAMES,
+		SYSTEM_POSITIONS,
+		type FingerId,
+		type Instrument,
+		type PositionId,
+		type PositionSystem
+	} from '$lib/strings';
+	import { makeQr, qrExtent, qrPath, qrPng } from '$lib/qr';
+	import logo from '$lib/assets/logo.svg';
+	import RangeSelector from '$lib/RangeSelector.svelte';
+	import Staff from '$lib/Staff.svelte';
+
+	// A demo site can offer just some of the activities (PUBLIC_ACTIVITIES).
+	const activities = parseActivities(env.PUBLIC_ACTIVITIES);
+
+	// Settings of a kind this site does not offer switch to the first it does.
+	function offered(s: Settings): Settings {
+		return activities.includes(s.activity) ? s : applyActivityType(s, activities[0]);
+	}
+	const load = (query: string) => offered(fromQuery(query));
+
+	let settings = $state<Settings>(offered(structuredClone(DEFAULT_SETTINGS)));
+
+	const ALL_VALUES: NoteValue[] = ['whole', 'half', 'quarter'];
+
+	// Each instrument gets its own activity: its clef, its range, its fingerings.
+	const fingering = $derived(fingeringOptions(settings));
+	const limits = $derived(playableRange(settings.instrument, fingering));
+
+	// Turning fingerings off leaves gaps inside the range — a note the student
+	// has no way to play is skipped — so tell the teacher what is left.
+	const available = $derived(
+		playableNotes(settings.instrument, fingering).filter(
+			(n) =>
+				n.index >= parseNoteName(settings.rangeLow) && n.index <= parseNoteName(settings.rangeHigh)
+		).length
+	);
+
+	function selectInstrument(choice: Instrument) {
+		settings = applyInstrument(settings, choice);
+	}
+
+	// A key signature changes which fingerings reach which notes: in D major the
+	// violin's F is high 2, and the cello's low C needs an extension rather than
+	// the open string. So the range has to be re-checked.
+	function selectKey(key: KeyId) {
+		settings = clampRange({ ...settings, key });
+	}
+
+	// Which system names the bass positions. The hand shapes are the same either
+	// way, so this mostly changes what the student is asked to call them.
+	function selectPositionSystem(system: PositionSystem) {
+		settings = applyPositionSystem(settings, system);
+	}
+
+	// Positions the bass answers may use, from the ones the chosen system offers.
+	// Keep at least one, and re-clamp the range, since dropping the top position
+	// takes the top two notes out of reach.
+	function toggleBassPosition(p: PositionId) {
+		const has = settings.bassPositions.includes(p);
+		const next = SYSTEM_POSITIONS[settings.positionSystem].filter((id) =>
+			id === p ? !has : settings.bassPositions.includes(id)
+		);
+		if (!next.length) return;
+		settings = clampRange({ ...settings, bassPositions: next });
+	}
+
+	// Fingers the student may be asked for. The open string always counts, and
+	// there has to be something to play besides it.
+	function toggleFinger(id: FingerId) {
+		if (id === 'open') return;
+		const has = settings.fingers.includes(id);
+		const next = FINGER_SETS[settings.instrument].filter((f) =>
+			f === id ? !has : settings.fingers.includes(f)
+		);
+		if (next.every((f) => f === 'open')) return;
+		settings = clampRange({ ...settings, fingers: next });
+	}
+
+	function selectActivity(choice: ActivityType) {
+		settings = applyActivityType(settings, choice);
+	}
+
+	// Band instruments the student may pick from. Keep at least one.
+	function toggleBandInstrument(inst: BandInstrument) {
+		const has = settings.bandInstruments.includes(inst);
+		const next = ALL_BAND_INSTRUMENTS.filter((i) =>
+			i === inst ? !has : settings.bandInstruments.includes(i)
+		);
+		if (next.length) settings.bandInstruments = next;
+	}
+
+	// The instrument whose range the teacher is adjusting, if any.
+	let adjusting = $state<BandInstrument | null>(null);
+	const adjustingRange = $derived(
+		adjusting ? bandRange(adjusting, settings.level, settings.rangeOverrides[adjusting]) : null
+	);
+
+	function setOverride(inst: BandInstrument, low: string, high: string) {
+		const level = BAND_INSTRUMENTS[inst].levels[settings.level];
+		const rest = { ...settings.rangeOverrides };
+		delete rest[inst];
+		// Back on the level's own range is no override at all.
+		settings.rangeOverrides =
+			level.low === low && level.high === high ? rest : { ...rest, [inst]: { low, high } };
+	}
+
+	function clearOverride(inst: BandInstrument) {
+		const rest = { ...settings.rangeOverrides };
+		delete rest[inst];
+		settings.rangeOverrides = rest;
+	}
+
+	const overridden = $derived(ALL_BAND_INSTRUMENTS.filter((i) => settings.rangeOverrides[i]));
+
+	// Both limits are optional: a blank or zero box means "no limit".
+	const MAX_MINUTES = MAX_SECONDS / 60;
+	const limitMinutes = $derived(Math.floor(settings.timeLimitSec / 60));
+	const limitSeconds = $derived(settings.timeLimitSec % 60);
+
+	function setQuestionLimit(value: string) {
+		settings.questionLimit = clamp(value, MAX_QUESTIONS);
+	}
+	// Minutes and seconds are two boxes over one stored value, so each edit keeps
+	// the other half and re-clamps the total to at most an hour.
+	function setTimeLimit(minutes: number, seconds: number) {
+		settings.timeLimitSec = Math.min(MAX_SECONDS, Math.max(0, minutes * 60 + seconds));
+	}
+	function clamp(value: string, max: number): number {
+		const n = Math.round(Number(value));
+		if (!Number.isFinite(n) || n <= 0) return 0;
+		return Math.min(max, n);
+	}
+
+	// Toggle helpers that keep at least one option selected where required.
+	function toggleValue(v: NoteValue) {
+		if (settings.noteValues.includes(v)) {
+			if (settings.noteValues.length > 1)
+				settings.noteValues = settings.noteValues.filter((x) => x !== v);
+		} else settings.noteValues = [...settings.noteValues, v];
+	}
+	// Shareable link (absolute once we know the site address).
+	let origin = $state('');
+	const link = $derived(`${origin}/challenge?${settingsToQuery(settings)}`);
+
+	// ---------------------------------------------------------------------------
+	// Saved activities
+	// ---------------------------------------------------------------------------
+
+	let presets = $state<Preset[]>([]);
+	let activeId = $state<string | null>(null);
+	// Nothing is written back until the stored state has been read, or the first
+	// render would overwrite the teacher's work with the defaults.
+	let loaded = $state(false);
+
+	const activePreset = $derived(presets.find((p) => p.id === activeId) ?? null);
+	// Changes worth a Save: either edits on top of a saved activity, or an
+	// activity that has never been saved at all.
+	const unsaved = $derived(!activePreset || !sameSettings(settings, load(activePreset.query)));
+	const canDiscard = $derived(!!activePreset && unsaved);
+
+	onMount(() => {
+		origin = window.location.origin;
+		qrOpen = loadQrOpen();
+		presets = loadPresets();
+		const working = loadWorking();
+		if (working) {
+			settings = load(working.query);
+			activeId = presets.some((p) => p.id === working.presetId) ? working.presetId : null;
+		}
+		loaded = true;
+	});
+
+	// Remember whatever is on screen, so a refresh picks up where it left off.
+	// Reading the settings through the encoder is what makes this run on *any*
+	// edit rather than only when the settings object is replaced wholesale.
+	$effect(() => {
+		const query = settingsToQuery(settings);
+		if (!loaded) return;
+		saveWorking({ query, presetId: activeId });
+	});
+
+	let naming = $state(false);
+	let draftName = $state('');
+	let confirmingDiscard = $state(false);
+	let confirmingDelete = $state(false);
+	let presetNote = $state('');
+
+	// Sentinel for the dropdown's last entry, which is an action rather than a
+	// saved activity. No real id can collide with it.
+	const NEW_ACTIVITY = '\u0000new';
+
+	function pickActivity(event: Event) {
+		const value = (event.currentTarget as HTMLSelectElement).value;
+		if (value === NEW_ACTIVITY) newActivity();
+		else loadPreset(value);
+	}
+
+	// A blank activity to build from, not yet saved under any name.
+	function newActivity() {
+		settings = structuredClone(DEFAULT_SETTINGS);
+		activeId = null;
+		naming = false;
+		confirmingDiscard = false;
+		confirmingDelete = false;
+		flash('Started a new activity');
+	}
+
+	function startSave() {
+		presetNote = '';
+		confirmingDiscard = false;
+		// Saving over an activity that already has a name needs no prompt.
+		if (activePreset) {
+			presets = presets.map((p) =>
+				p.id === activePreset.id ? { ...p, query: settingsToQuery(settings) } : p
+			);
+			savePresets(presets);
+			flash(`Saved “${activePreset.name}”`);
+			return;
+		}
+		draftName = '';
+		naming = true;
+	}
+
+	function confirmSaveAs() {
+		const name = draftName.trim();
+		if (!name) return;
+		const preset: Preset = { id: newId(), name, query: settingsToQuery(settings) };
+		presets = [...presets, preset];
+		savePresets(presets);
+		activeId = preset.id;
+		naming = false;
+		flash(`Saved “${name}”`);
+	}
+
+	function loadPreset(id: string) {
+		const preset = presets.find((p) => p.id === id);
+		if (!preset) return;
+		settings = load(preset.query);
+		activeId = preset.id;
+		confirmingDiscard = false;
+		presetNote = '';
+	}
+
+	function discardChanges() {
+		if (!activePreset) return;
+		settings = load(activePreset.query);
+		confirmingDiscard = false;
+		flash('Changes discarded');
+	}
+
+	function deletePreset(id: string) {
+		const gone = presets.find((p) => p.id === id);
+		presets = presets.filter((p) => p.id !== id);
+		savePresets(presets);
+		// The settings stay on screen — only the saved copy goes — so the teacher
+		// can rename it or put it back rather than losing the work outright.
+		if (activeId === id) activeId = null;
+		confirmingDelete = false;
+		flash(gone ? `Deleted “${gone.name}”` : 'Deleted');
+	}
+
+	let noteTimer: ReturnType<typeof setTimeout>;
+	function flash(message: string) {
+		presetNote = message;
+		clearTimeout(noteTimer);
+		noteTimer = setTimeout(() => (presetNote = ''), 2000);
+	}
+
+	// --- moving an activity between machines, as a plain JSON file ---
+
+	function exportSettings() {
+		const name = activePreset?.name ?? 'Untitled activity';
+		const file = JSON.stringify({ name, settings }, null, 2);
+		const url = URL.createObjectURL(new Blob([file], { type: 'application/json' }));
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `${name.replace(/[^\w-]+/g, '-').toLowerCase()}.json`;
+		a.click();
+		URL.revokeObjectURL(url);
+	}
+
+	let fileInput: HTMLInputElement;
+
+	async function importSettings(event: Event) {
+		const input = event.target as HTMLInputElement;
+		const file = input.files?.[0];
+		input.value = ''; // so picking the same file twice still fires
+		if (!file) return;
+		try {
+			const raw = JSON.parse(await file.text());
+			const imported = settingsFromJson(raw);
+			const name = nameFromJson(raw);
+			settings = imported;
+			naming = false;
+			confirmingDiscard = false;
+			confirmingDelete = false;
+			if (!name) {
+				// Nothing to file it under, so it stays an unsaved activity.
+				activeId = null;
+				draftName = '';
+				flash('Imported settings');
+				return;
+			}
+			// The file names an activity, so it arrives as a saved one of its own,
+			// under the name it was exported with.
+			const preset: Preset = {
+				id: newId(),
+				name: freeName(name),
+				query: settingsToQuery(imported)
+			};
+			presets = [...presets, preset];
+			savePresets(presets);
+			activeId = preset.id;
+			flash(`Imported “${preset.name}”`);
+		} catch {
+			flash('That file could not be read');
+		}
+	}
+
+	// Two files can be exported under the same name, and importing one must not
+	// quietly take over the activity already saved as it.
+	function freeName(name: string): string {
+		const taken = (n: string) => presets.some((p) => p.name === n);
+		if (!taken(name)) return name;
+		let n = 2;
+		while (taken(`${name} (${n})`)) n++;
+		return `${name} (${n})`;
+	}
+
+	// Icon outlines, drawn on a 24×24 grid and stroked by the .icon rule below.
+	const COPY = 'M8 8h11v11H8z M5 16V5h11';
+	const CHECK = 'M4 12l5 5L20 6';
+	const DOWNLOAD = 'M12 4v10 M8 10l4 4 4-4 M5 19h14';
+	const EYE = 'M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z M12 9.5a2.5 2.5 0 100 5';
+	const EYE_OFF = `${EYE} M4 4l16 16`;
+	const UPLOAD = 'M12 14V4 M8 8l4-4 4 4 M5 19h14';
+	const TRASH = 'M4 7h16 M9 7V5h6v2 M6 7l1 12h10l1-12';
+	const SAVE = 'M5 5h11l3 3v11H5z M8 19v-5h8v5 M9 5v4h5V5';
+	const RESET = 'M4 9a8 8 0 1 1 .5 6 M4 4v5h5';
+	const OPEN = 'M7 17L17 7 M10 7h7v7';
+
+	let copied = $state(false);
+	async function copyLink() {
+		await navigator.clipboard.writeText(link);
+		copied = true;
+		setTimeout(() => (copied = false), 1500);
+	}
+
+	// The same link as something a class can scan. Held back until the address is
+	// known, so the code is never one that points at the wrong place.
+	const qr = $derived(origin ? makeQr(link) : null);
+
+	// Hidden until asked for: shown it is the tallest thing in the card, and most
+	// of the time the teacher only wants the link. Whichever way it is left is
+	// remembered, so a teacher who projects the code every lesson finds it up.
+	let qrOpen = $state(false);
+
+	function toggleQr() {
+		qrOpen = !qrOpen;
+		saveQrOpen(qrOpen);
+	}
+	let qrCopied = $state(false);
+	let qrNote = $state('');
+
+	async function copyQr() {
+		if (!qr) return;
+		qrNote = '';
+		try {
+			const png = await qrPng(qr);
+			await navigator.clipboard.write([new ClipboardItem({ 'image/png': png })]);
+			qrCopied = true;
+			setTimeout(() => (qrCopied = false), 1500);
+		} catch {
+			// Not every browser will put an image on the clipboard. Say so rather
+			// than failing quietly — Save always works.
+			qrNote = 'This browser will not copy images. Use Save instead.';
+		}
+	}
+
+	async function saveQr() {
+		if (!qr) return;
+		qrNote = '';
+		const url = URL.createObjectURL(await qrPng(qr));
+		const a = document.createElement('a');
+		a.href = url;
+		const name = settings.activity === 'strings' ? settings.instrument : settings.activity;
+		a.download = `${name}-practice-qr.png`;
+		a.click();
+		URL.revokeObjectURL(url);
+	}
+</script>
+
+{#snippet levelChips()}
+	<fieldset>
+		<legend>Level</legend>
+		<p class="hint">How far into the instrument's range the notes reach.</p>
+		<div class="chips">
+			{#each ALL_LEVELS as choice (choice)}
+				<button
+					type="button"
+					class="chip"
+					class:on={settings.level === choice}
+					onclick={() => (settings.level = choice)}>{LEVEL_NAMES[choice]}</button
+				>
+			{/each}
+		</div>
+		{#if settings.activity === 'band' && settings.level === 'beginner'}
+			<p class="hint after">Beginner is the first five notes: concert B♭, C, D, E♭ and F.</p>
+		{/if}
+	</fieldset>
+{/snippet}
+
+{#snippet askName(what: string)}
+	<fieldset>
+		<legend>Ask for</legend>
+		<p class="hint">Students answer each selected item in order.</p>
+		<div class="chips">
+			<button
+				type="button"
+				class="chip"
+				class:on={settings.askName}
+				onclick={() => (settings.askName = !settings.askName)}>Note name</button
+			>
+			<span class="chip on locked">{what}</span>
+		</div>
+	</fieldset>
+{/snippet}
+
+{#snippet bandSettings()}
+	<fieldset>
+		<legend>Concert key</legend>
+		<p class="hint">Each instrument reads it in its own key — concert B♭ is C on trumpet.</p>
+		<div class="chips">
+			{#each ALL_CONCERT_KEYS as choice (choice)}
+				<button
+					type="button"
+					class="chip"
+					class:on={settings.concertKey === choice}
+					onclick={() => (settings.concertKey = choice)}>{CONCERT_KEY_NAMES[choice]}</button
+				>
+			{/each}
+		</div>
+		<label class="switch"
+			><input type="checkbox" bind:checked={settings.accidentals} /> Accidentals — write sharps, flats
+			and naturals on some notes, on top of the key signature</label
+		>
+	</fieldset>
+
+	{@render levelChips()}
+
+	<fieldset>
+		<legend>Instruments</legend>
+		<p class="hint">
+			Students pick from these. Untick some for a sectional. Every fingering accepted is on the
+			<a href={resolve('/chart')} target="_blank" rel="noopener">fingering charts</a>.
+		</p>
+		<div class="instruments">
+			{#each ALL_BAND_INSTRUMENTS as inst (inst)}
+				{@const range = bandRange(inst, settings.level, settings.rangeOverrides[inst])}
+				<div class="instrument" class:off={!settings.bandInstruments.includes(inst)}>
+					<label class="pick">
+						<input
+							type="checkbox"
+							checked={settings.bandInstruments.includes(inst)}
+							onchange={() => toggleBandInstrument(inst)}
+						/>
+						<img src={instrumentArt(inst)} alt="" />
+						<span class="instname">{BAND_INSTRUMENTS[inst].name}</span>
+					</label>
+					<span class="instrange">
+						{KEY_NAMES[writtenKey(settings.concertKey, inst)]} · {range.low}–{range.high}
+						{#if settings.rangeOverrides[inst]}<span class="custom">custom</span>{/if}
+					</span>
+					<button
+						type="button"
+						class="linkbtn"
+						aria-expanded={adjusting === inst}
+						onclick={() => (adjusting = adjusting === inst ? null : inst)}
+						>{adjusting === inst ? 'Done' : 'Adjust range'}</button
+					>
+				</div>
+				{#if adjusting === inst && adjustingRange}
+					<div class="adjust">
+						<RangeSelector
+							clef={BAND_INSTRUMENTS[inst].clef}
+							keySig={writtenKey(settings.concertKey, inst)}
+							low={adjustingRange.low}
+							high={adjustingRange.high}
+							minNote={chartRange(inst).low}
+							maxNote={chartRange(inst).high}
+							onchange={(low, high) => setOverride(inst, low, high)}
+						/>
+						{#if settings.rangeOverrides[inst]}
+							<button type="button" class="linkbtn" onclick={() => clearOverride(inst)}
+								>Back to the {LEVEL_NAMES[settings.level]} range</button
+							>
+						{/if}
+					</div>
+				{/if}
+			{/each}
+		</div>
+		{#if overridden.length}
+			<p class="hint after">
+				Custom ranges: {overridden.map((i) => BAND_INSTRUMENTS[i].name).join(', ')}. The others
+				follow the level.
+			</p>
+		{/if}
+	</fieldset>
+
+	{@render askName('Fingering')}
+{/snippet}
+
+{#snippet pianoSettings()}
+	<fieldset>
+		<legend>Clef</legend>
+		<div class="chips">
+			{#each ALL_PIANO_CLEFS as choice (choice)}
+				<button
+					type="button"
+					class="chip"
+					class:on={settings.pianoClefs === choice}
+					onclick={() => (settings.pianoClefs = choice)}>{PIANO_CLEF_NAMES[choice]}</button
+				>
+			{/each}
+		</div>
+	</fieldset>
+
+	<fieldset>
+		<legend>Key signature</legend>
+		<div class="chips">
+			{#each ALL_KEYS as choice (choice)}
+				<button
+					type="button"
+					class="chip"
+					class:on={settings.key === choice}
+					onclick={() => (settings.key = choice)}>{KEY_NAMES[choice]}</button
+				>
+			{/each}
+		</div>
+		<label class="switch"
+			><input type="checkbox" bind:checked={settings.accidentals} /> Accidentals — write sharps, flats
+			and naturals on some notes, on top of the key signature</label
+		>
+	</fieldset>
+
+	{@render levelChips()}
+	{@render askName('Key')}
+{/snippet}
+
+{#snippet icon(d: string)}
+	<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path {d} /></svg>
+{/snippet}
+
+<div class="page">
+	<header class="intro">
+		<p class="brand"><img src={logo} alt="" width="30" height="30" /> Clef Coach</p>
+		<h1>Notes &amp; Fingering Practice</h1>
+		<p>Choose an activity and its settings, then share the link with students.</p>
+	</header>
+
+	<div class="layout">
+		<section class="panel settings" aria-label="Settings">
+			<fieldset>
+				<legend>Activity</legend>
+				{#if activities.length > 1}
+					<div class="chips">
+						{#each activities as choice (choice)}
+							<button
+								type="button"
+								class="chip"
+								class:on={settings.activity === choice}
+								onclick={() => selectActivity(choice)}>{ACTIVITY_TYPE_NAMES[choice]}</button
+							>
+						{/each}
+					</div>
+				{/if}
+				<p class="hint after">
+					{#if settings.activity === 'band'}
+						One link for the whole band: each student picks their instrument and reads in their own
+						key.
+					{:else if settings.activity === 'piano'}
+						Students read the note and click its key on a piano keyboard.
+					{:else}
+						Violin, viola, cello or bass: name the note, then the string and finger.
+					{/if}
+				</p>
+			</fieldset>
+
+			{#if settings.activity === 'strings'}
+				<fieldset>
+					<legend>Instrument</legend>
+					<p class="hint">Choose an instrument for this activity.</p>
+					<div class="chips">
+						{#each ALL_INSTRUMENTS as choice (choice)}
+							<button
+								type="button"
+								class="chip clef-chip"
+								class:on={settings.instrument === choice}
+								onclick={() => selectInstrument(choice)}
+							>
+								<span class="clef-preview" aria-hidden="true"
+									><Staff clef={INSTRUMENTS[choice].clef} /></span
+								>
+								<span>{INSTRUMENT_NAMES[choice]}</span>
+							</button>
+						{/each}
+					</div>
+					<p class="hint after">
+						Reads {CLEF_NAMES[settings.clefs[0]].toLowerCase()} clef; strings tuned {INSTRUMENTS[
+							settings.instrument
+						].strings
+							.map((s) => s.replace(/\d+$/, ''))
+							.join(' ')}.
+					</p>
+				</fieldset>
+
+				<fieldset>
+					<legend>Key signature</legend>
+					<p class="hint">Choose the key shown on the staff.</p>
+					<div class="chips">
+						{#each STRING_KEYS as choice (choice)}
+							<button
+								type="button"
+								class="chip"
+								class:on={settings.key === choice}
+								onclick={() => selectKey(choice)}>{KEY_NAMES[choice]}</button
+							>
+						{/each}
+					</div>
+					<label class="switch"
+						><input type="checkbox" bind:checked={settings.accidentals} /> Accidentals — write sharps,
+						flats and naturals on some notes, on top of the key signature</label
+					>
+				</fieldset>
+
+				<fieldset>
+					<legend>Ask for</legend>
+					<p class="hint">
+						Students answer each selected item in order. All valid fingerings are accepted.
+					</p>
+					<div class="chips">
+						<span class="chip on locked">Note</span>
+						<button
+							type="button"
+							class="chip"
+							class:on={settings.askString}
+							onclick={() => (settings.askString = !settings.askString)}>String</button
+						>
+						{#if usesPositions(settings)}
+							<button
+								type="button"
+								class="chip"
+								class:on={settings.askPosition}
+								onclick={() => (settings.askPosition = !settings.askPosition)}>Position</button
+							>
+						{/if}
+						<button
+							type="button"
+							class="chip"
+							class:on={settings.askFinger}
+							onclick={() => (settings.askFinger = !settings.askFinger)}>Finger</button
+						>
+					</div>
+				</fieldset>
+
+				{#if settings.askFinger}
+					<fieldset>
+						<legend>Answer with</legend>
+						<p class="hint">How students give the string and finger. Students can't change this.</p>
+						<div class="chips">
+							<button
+								type="button"
+								class="chip"
+								class:on={settings.answerMode === 'draw'}
+								onclick={() => (settings.answerMode = 'draw')}>Fingerboard drawing</button
+							>
+							<button
+								type="button"
+								class="chip"
+								class:on={settings.answerMode === 'buttons'}
+								onclick={() => (settings.answerMode = 'buttons')}>Buttons</button
+							>
+						</div>
+						<p class="hint after">
+							{#if settings.answerMode === 'draw'}
+								Students tap where the finger goes on the fingerboard, which names the string too.{usesPositions(
+									settings
+								)
+									? asksPosition(settings)
+										? ' Bass students then name the position.'
+										: ' Bass students then name the finger.'
+									: ''}
+							{:else}
+								Students pick the string, then the finger, from buttons.
+							{/if}
+						</p>
+					</fieldset>
+				{/if}
+
+				{#if usesPositions(settings)}
+					<fieldset>
+						<legend>Position system</legend>
+						<p class="hint">Choose how bass positions are named.</p>
+						<div class="chips">
+							{#each ALL_POSITION_SYSTEMS as choice (choice)}
+								<button
+									type="button"
+									class="chip"
+									class:on={settings.positionSystem === choice}
+									onclick={() => selectPositionSystem(choice)}
+									>{POSITION_SYSTEM_NAMES[choice]}</button
+								>
+							{/each}
+						</div>
+					</fieldset>
+
+					<fieldset>
+						<legend>Positions</legend>
+						<p class="hint">Choose which positions the fingerings may use.</p>
+						<div class="chips">
+							{#each SYSTEM_POSITIONS[settings.positionSystem] as id (id)}
+								<button
+									type="button"
+									class="chip"
+									class:on={settings.bassPositions.includes(id)}
+									onclick={() => toggleBassPosition(id)}
+									>{positionName(id, settings.positionSystem)} ({positionLabel(
+										id,
+										settings.positionSystem
+									)})</button
+								>
+							{/each}
+						</div>
+					</fieldset>
+				{/if}
+
+				<fieldset>
+					<legend>Fingerings</legend>
+					<p class="hint">Choose which fingerings to include.</p>
+					<div class="chips">
+						{#each FINGER_SETS[settings.instrument] as id (id)}
+							{#if id === 'open'}
+								<span class="chip on locked">Open</span>
+							{:else}
+								<button
+									type="button"
+									class="chip"
+									class:on={settings.fingers.includes(id)}
+									onclick={() => toggleFinger(id)}
+									title={FINGERS[id].name}>{FINGERS[id].label}</button
+								>
+							{/if}
+						{/each}
+					</div>
+				</fieldset>
+
+				<fieldset>
+					<legend>Range</legend>
+					<RangeSelector
+						clef={settings.clefs[0]}
+						keySig={settings.key}
+						low={settings.rangeLow}
+						high={settings.rangeHigh}
+						minNote={limits.low}
+						maxNote={limits.high}
+						onchange={(low, high) => {
+							settings.rangeLow = low;
+							settings.rangeHigh = high;
+						}}
+					/>
+					<p class="hint after">
+						Available range: {limits.low}–{limits.high}. {available} playable note{available === 1
+							? ''
+							: 's'} selected.
+					</p>
+				</fieldset>
+			{:else if settings.activity === 'band'}
+				{@render bandSettings()}
+			{:else}
+				{@render pianoSettings()}
+			{/if}
+
+			<fieldset>
+				<legend>Lines &amp; spaces</legend>
+				<div class="chips">
+					<button
+						type="button"
+						class="chip"
+						class:on={settings.positions === 'both'}
+						onclick={() => (settings.positions = 'both')}>Lines &amp; spaces</button
+					>
+					<button
+						type="button"
+						class="chip"
+						class:on={settings.positions === 'lines'}
+						onclick={() => (settings.positions = 'lines')}>Lines only</button
+					>
+					<button
+						type="button"
+						class="chip"
+						class:on={settings.positions === 'spaces'}
+						onclick={() => (settings.positions = 'spaces')}>Spaces only</button
+					>
+				</div>
+			</fieldset>
+
+			<fieldset>
+				<legend>Note values</legend>
+				<div class="chips">
+					{#each ALL_VALUES as v (v)}
+						<button
+							type="button"
+							class="chip"
+							class:on={settings.noteValues.includes(v)}
+							onclick={() => toggleValue(v)}>{v[0].toUpperCase() + v.slice(1)}</button
+						>
+					{/each}
+				</div>
+			</fieldset>
+
+			<fieldset class="toggles">
+				<label class="switch"
+					><input type="checkbox" bind:checked={settings.helpers} /> Helpers (letter labels beside the
+					staff)</label
+				>
+			</fieldset>
+
+			<fieldset>
+				<legend>Challenge mode</legend>
+				<p class="hint">Leave a box empty for no limit.</p>
+				<div class="limits">
+					<label class="limit">
+						<span>Questions</span>
+						<input
+							type="number"
+							min="1"
+							max={MAX_QUESTIONS}
+							step="1"
+							placeholder="Off"
+							value={settings.questionLimit || ''}
+							oninput={(e) => setQuestionLimit(e.currentTarget.value)}
+						/>
+					</label>
+					<div class="limit" role="group" aria-label="Time limit">
+						<span>Time limit</span>
+						<div class="timerow">
+							<span class="timebox">
+								<input
+									type="number"
+									min="0"
+									max={MAX_MINUTES}
+									step="1"
+									placeholder="0"
+									aria-label="Time limit minutes"
+									value={limitMinutes || ''}
+									oninput={(e) =>
+										setTimeLimit(clamp(e.currentTarget.value, MAX_MINUTES), limitSeconds)}
+								/>
+								<span class="unit">min</span>
+							</span>
+							<span class="timebox">
+								<input
+									type="number"
+									min="0"
+									max="59"
+									step="1"
+									placeholder="0"
+									aria-label="Time limit seconds"
+									value={limitSeconds || ''}
+									oninput={(e) => setTimeLimit(limitMinutes, clamp(e.currentTarget.value, 59))}
+								/>
+								<span class="unit">sec</span>
+							</span>
+						</div>
+					</div>
+				</div>
+				<label class="switch"
+					><input type="checkbox" bind:checked={settings.detailedReport} /> Show detailed report — which
+					notes were missed, and how often</label
+				>
+			</fieldset>
+
+			<fieldset>
+				<legend>Homework</legend>
+				<p class="hint">
+					Give the activity a title to hand it out as an assignment. Students see it, and it is
+					printed on the PDF of their results they hand in.
+				</p>
+				<input
+					class="titleinput"
+					type="text"
+					maxlength={MAX_TITLE_LENGTH}
+					placeholder="e.g. Week 3 — first five notes"
+					aria-label="Assignment title"
+					bind:value={settings.title}
+				/>
+			</fieldset>
+		</section>
+
+		<!-- Rides alongside the settings and follows the teacher down the page, so
+		     the link is in reach whatever they are in the middle of changing. -->
+		<div class="side">
+			<!-- Saving, discarding and moving an activity between machines. Sits above
+			     the share card because it is about the activity itself. -->
+			<aside class="activity">
+				<div class="actionrow">
+					<select
+						class="activityselect"
+						value={activeId ?? ''}
+						onchange={pickActivity}
+						aria-label="Activity"
+					>
+						{#if !activePreset}
+							<option value="">Unsaved activity</option>
+						{/if}
+						{#each presets as preset (preset.id)}
+							<option value={preset.id}>{preset.name}</option>
+						{/each}
+						<option value={NEW_ACTIVITY}>+ New activity</option>
+					</select>
+
+					<button
+						type="button"
+						class="iconbtn badged"
+						onclick={startSave}
+						aria-label={activePreset ? 'Save changes' : 'Save this as an activity'}
+						title={activePreset
+							? `Save changes to “${activePreset.name}”`
+							: 'Save this as an activity'}
+					>
+						{@render icon(SAVE)}
+						{#if unsaved}<span class="bubble" aria-hidden="true"></span>{/if}
+					</button>
+					<button
+						type="button"
+						class="iconbtn"
+						disabled={!canDiscard}
+						onclick={() => (confirmingDiscard = true)}
+						aria-label="Discard changes since the last save"
+						title="Discard changes since the last save"
+					>
+						{@render icon(RESET)}
+					</button>
+				</div>
+
+				<div class="filerow">
+					<button type="button" class="filebtn" onclick={() => fileInput.click()}>
+						{@render icon(UPLOAD)} Import
+					</button>
+					<button type="button" class="filebtn" onclick={exportSettings}>
+						{@render icon(DOWNLOAD)} Export
+					</button>
+					{#if activePreset}
+						<button type="button" class="filebtn danger" onclick={() => (confirmingDelete = true)}>
+							{@render icon(TRASH)} Delete
+						</button>
+					{/if}
+					<input
+						bind:this={fileInput}
+						class="hidden-file"
+						type="file"
+						accept="application/json,.json"
+						onchange={importSettings}
+					/>
+				</div>
+
+				{#if naming}
+					<div class="namerow">
+						<!-- svelte-ignore a11y_autofocus -->
+						<input
+							class="nameinput"
+							placeholder="Name this activity"
+							bind:value={draftName}
+							autofocus
+							onkeydown={(e) => {
+								if (e.key === 'Enter') confirmSaveAs();
+								if (e.key === 'Escape') naming = false;
+							}}
+						/>
+						<button type="button" class="btn-save pending" onclick={confirmSaveAs}>Save</button>
+						<button type="button" class="btn-ghost" onclick={() => (naming = false)}>Cancel</button>
+					</div>
+				{/if}
+
+				{#if confirmingDiscard}
+					<div class="confirm">
+						<span>Throw away changes since the last save?</span>
+						<button type="button" class="btn-danger" onclick={discardChanges}>Discard</button>
+						<button type="button" class="btn-ghost" onclick={() => (confirmingDiscard = false)}>
+							Keep
+						</button>
+					</div>
+				{/if}
+
+				{#if confirmingDelete && activePreset}
+					<div class="confirm">
+						<span>Delete “{activePreset.name}” for good?</span>
+						<button type="button" class="btn-danger" onclick={() => deletePreset(activePreset.id)}>
+							Delete
+						</button>
+						<button type="button" class="btn-ghost" onclick={() => (confirmingDelete = false)}>
+							Keep
+						</button>
+					</div>
+				{/if}
+
+				{#if presetNote}<p class="presetnote">{presetNote}</p>{/if}
+			</aside>
+
+			<aside class="sharebar">
+				<p class="sharetitle">Share with students</p>
+
+				<!-- The address itself, an icon that copies it, and a button that
+			     opens the activity in a new tab so the teacher keeps this one. -->
+				<div class="linkrow">
+					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- opens the shareable challenge link in a new tab -->
+					<a class="linktext" href={link} target="_blank" rel="noopener" title={link}>{link}</a>
+					<button
+						type="button"
+						class="iconbtn"
+						onclick={copyLink}
+						aria-label="Copy link"
+						title={copied ? 'Copied' : 'Copy link'}
+					>
+						{@render icon(copied ? CHECK : COPY)}
+					</button>
+					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- opens the shareable challenge link in a new tab -->
+					<a class="openbtn" href={link} target="_blank" rel="noopener" title="Open in a new tab">
+						Open {@render icon(OPEN)}
+					</a>
+				</div>
+
+				{#if qr}
+					<!-- The code itself stays out of the way until the eye is pressed;
+				     saving and copying do not need it on screen. -->
+					<div class="qrrow">
+						<span class="qrlabel">QR code</span>
+						<button
+							type="button"
+							class="iconbtn"
+							onclick={toggleQr}
+							aria-expanded={qrOpen}
+							aria-label={qrOpen ? 'Hide the QR code' : 'Show the QR code'}
+							title={qrOpen ? 'Hide' : 'Show'}
+						>
+							{@render icon(qrOpen ? EYE_OFF : EYE)}
+						</button>
+						<button
+							type="button"
+							class="iconbtn"
+							onclick={saveQr}
+							aria-label="Save QR code"
+							title="Save QR code"
+						>
+							{@render icon(DOWNLOAD)}
+						</button>
+						<button
+							type="button"
+							class="iconbtn"
+							onclick={copyQr}
+							aria-label="Copy QR code"
+							title={qrCopied ? 'Copied' : 'Copy QR code'}
+						>
+							{@render icon(qrCopied ? CHECK : COPY)}
+						</button>
+					</div>
+
+					{#if qrOpen}
+						<div class="qr">
+							<svg
+								viewBox="0 0 {qrExtent(qr)} {qrExtent(qr)}"
+								role="img"
+								aria-label="QR code for this challenge link"
+							>
+								<rect width={qrExtent(qr)} height={qrExtent(qr)} fill="#fff" />
+								<path d={qrPath(qr)} fill="#000" />
+							</svg>
+						</div>
+					{/if}
+					{#if qrNote}<p class="sharenote">{qrNote}</p>{/if}
+				{/if}
+			</aside>
+		</div>
+	</div>
+</div>
+
+<style>
+	.page {
+		max-width: 64rem;
+		margin: 0 auto;
+		padding: 1.5rem 1.25rem 3rem;
+	}
+	.layout {
+		display: grid;
+		gap: 1.5rem;
+		align-items: start;
+	}
+	/* Wide enough for two columns: settings keep their old width and the share
+	   card takes the rest, sticking to the top as the page scrolls. Narrower
+	   than this it drops back under the settings, where a side column would
+	   only squeeze both. */
+	@media (min-width: 60rem) {
+		.layout {
+			grid-template-columns: minmax(0, 1fr) 19rem;
+		}
+		.side {
+			position: sticky;
+			top: 1.5rem;
+		}
+	}
+	.side {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+	.activity {
+		background: var(--card);
+		border: 1px solid var(--border);
+		border-radius: var(--radius);
+		padding: 0.9rem 1rem;
+	}
+	.actionrow {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+	}
+	.activityselect {
+		flex: 1;
+		min-width: 0;
+		padding: 0.45rem 0.55rem;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		background: #fff;
+		font-size: 0.9rem;
+		font-weight: 600;
+		color: #333;
+		cursor: pointer;
+	}
+	.actionrow .iconbtn {
+		height: 2.25rem;
+	}
+	/* Badge in the corner of the save button, the way an unread count sits on an
+	   app icon: visible at a glance, nothing to dismiss. */
+	.badged {
+		position: relative;
+		overflow: visible;
+	}
+	.bubble {
+		position: absolute;
+		top: -0.28rem;
+		right: -0.28rem;
+		width: 0.7rem;
+		height: 0.7rem;
+		border-radius: 50%;
+		background: var(--amber-border);
+		/* Matches the card behind it, so the badge reads as sitting on top. */
+		border: 2px solid var(--card);
+	}
+	.hidden-file {
+		display: none;
+	}
+	.filerow {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+		margin-top: 0.5rem;
+	}
+	.filebtn {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		padding: 0.3rem 0.55rem;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		background: #fff;
+		font-size: 0.8rem;
+		font-weight: 600;
+		color: #57606a;
+		cursor: pointer;
+	}
+	.filebtn:hover {
+		border-color: var(--blue);
+		color: var(--blue);
+	}
+	.filebtn.danger:hover {
+		border-color: #e5a8a4;
+		color: #b3261e;
+	}
+	.filebtn :global(.icon) {
+		width: 0.9rem;
+		height: 0.9rem;
+	}
+	.namerow,
+	.confirm {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.4rem;
+		margin-top: 0.6rem;
+	}
+	.confirm span {
+		flex: 1 1 100%;
+		font-size: 0.85rem;
+	}
+	.namerow :global(button),
+	.confirm :global(button) {
+		padding: 0.4rem 0.75rem;
+		font-size: 0.85rem;
+	}
+	.nameinput {
+		flex: 1 1 100%;
+		min-width: 0;
+		padding: 0.45rem 0.6rem;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		background: #fff;
+		font-size: 0.9rem;
+	}
+	.presetnote {
+		margin-top: 0.5rem;
+		font-size: 0.82rem;
+		font-weight: 600;
+		color: var(--blue-dark);
+	}
+	.brand {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin: 0 0 0.4rem;
+		font-size: 1.05rem;
+		font-weight: 700;
+		letter-spacing: 0.01em;
+		color: var(--blue-dark);
+	}
+	.intro h1 {
+		font-size: 1.9rem;
+		font-weight: 800;
+		margin-bottom: 0.25rem;
+	}
+	.intro p {
+		color: #555;
+		margin-bottom: 1.5rem;
+	}
+	.panel {
+		background: var(--card);
+		border: 1px solid var(--border);
+		border-radius: var(--radius);
+		padding: 1.25rem;
+	}
+	fieldset {
+		border: none;
+		padding: 0;
+		margin: 0 0 1.35rem;
+	}
+	fieldset:last-child {
+		margin-bottom: 0;
+	}
+	legend {
+		font-weight: 700;
+		margin-bottom: 0.55rem;
+	}
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+	}
+	.chip {
+		padding: 0.45rem 0.8rem;
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		background: #fff;
+		font-size: 0.9rem;
+		font-weight: 600;
+		color: #333;
+		cursor: pointer;
+	}
+	.chip:hover {
+		border-color: var(--blue);
+	}
+	.chip.on {
+		background: var(--blue);
+		border-color: var(--blue);
+		color: #fff;
+	}
+	.clef-chip {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.35rem 0.7rem 0.35rem 0.45rem;
+	}
+	.clef-preview {
+		display: block;
+		width: 4rem;
+	}
+	/* On the selected chip the staff sits on blue, so draw it in white. */
+	.chip.on .clef-preview {
+		--staff-ink: #fff;
+	}
+	.hint {
+		color: #555;
+		font-size: 0.82rem;
+		margin: -0.25rem 0 0.6rem;
+	}
+	/* The same note, but sitting under the control it explains. */
+	.hint.after {
+		margin: 0.5rem 0 0;
+	}
+	/* Parts of the sequence the teacher does not get to switch off. */
+	.chip.locked {
+		cursor: default;
+		opacity: 0.75;
+	}
+	.chip:disabled {
+		opacity: 0.5;
+		cursor: default;
+	}
+	.chip:disabled:hover {
+		border-color: var(--border);
+	}
+	.instruments {
+		display: flex;
+		flex-direction: column;
+		gap: 0.35rem;
+	}
+	.instrument {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.25rem 0.75rem;
+		padding: 0.35rem 0.6rem;
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		background: #fff;
+	}
+	.instrument.off {
+		opacity: 0.6;
+	}
+	.pick {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		flex: 1 1 12rem;
+		cursor: pointer;
+		font-weight: 600;
+		font-size: 0.92rem;
+	}
+	.pick img {
+		width: 2.6rem;
+		height: 2rem;
+		object-fit: contain;
+	}
+	.instrange {
+		font-size: 0.8rem;
+		color: #555;
+		font-variant-numeric: tabular-nums;
+	}
+	.custom {
+		margin-left: 0.3rem;
+		padding: 0 0.35rem;
+		border-radius: 999px;
+		background: var(--blue-soft);
+		color: var(--blue-dark);
+		font-weight: 700;
+	}
+	.linkbtn {
+		border: none;
+		background: none;
+		padding: 0.2rem 0;
+		font: inherit;
+		font-size: 0.82rem;
+		font-weight: 600;
+		color: var(--blue-dark);
+		cursor: pointer;
+		text-decoration: underline;
+	}
+	.adjust {
+		padding: 0.5rem 0.75rem 0.75rem;
+		border: 1px dashed var(--blue-border);
+		border-radius: 10px;
+		background: #fff;
+	}
+	.titleinput {
+		width: 100%;
+		padding: 0.5rem 0.65rem;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		background: #fff;
+		font: inherit;
+	}
+	.titleinput:focus-visible {
+		outline: 2px solid var(--blue);
+		outline-offset: 1px;
+	}
+	.limits {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1.25rem;
+		align-items: flex-start;
+	}
+	.limit {
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+		border: none;
+		padding: 0;
+		margin: 0;
+		font-size: 0.9rem;
+	}
+	.limit > span {
+		font-weight: 600;
+	}
+	.timerow {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		align-items: center;
+	}
+	.timebox {
+		display: flex;
+		align-items: center;
+		gap: 0.3rem;
+	}
+	.unit {
+		color: #555;
+		font-size: 0.85rem;
+	}
+	.limit input {
+		width: 5rem;
+		padding: 0.4rem 0.5rem;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		background: #fff;
+		font: inherit;
+		font-weight: 600;
+	}
+	.limit input:focus-visible {
+		outline: 2px solid var(--blue);
+		outline-offset: 1px;
+	}
+	.toggles {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+	}
+	.switch {
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+		cursor: pointer;
+		font-size: 0.92rem;
+	}
+	/* The report and accidentals switches sit under the choices they belong
+	   with, and their labels run long enough to wrap. */
+	.limits + .switch,
+	.chips + .switch {
+		align-items: flex-start;
+		margin-top: 0.9rem;
+	}
+	.sharebar {
+		background: var(--blue-soft);
+		border: 1px solid var(--blue-border);
+		border-radius: var(--radius);
+		padding: 1rem 1.25rem;
+	}
+	.sharetitle {
+		font-weight: 700;
+		margin-bottom: 0.5rem;
+	}
+	/* Link and its copy button on one line, the address itself taking whatever
+	   room is left and trailing off rather than wrapping the card wider. */
+	.linkrow {
+		display: flex;
+		align-items: stretch;
+		gap: 0.4rem;
+	}
+	.linktext {
+		flex: 1;
+		min-width: 0;
+		padding: 0.5rem 0.7rem;
+		border: 1px solid var(--blue-border);
+		border-radius: 8px;
+		background: #fff;
+		font-size: 0.85rem;
+		color: var(--blue-dark);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.linktext:hover {
+		border-color: var(--blue);
+		text-decoration: underline;
+	}
+	/* The same shell as an icon button, widened to carry its label. */
+	.openbtn {
+		flex: none;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		padding: 0 0.7rem;
+		border: 1px solid var(--blue-border);
+		border-radius: 8px;
+		background: #fff;
+		color: var(--blue-dark);
+		font-size: 0.85rem;
+		font-weight: 600;
+		text-decoration: none;
+	}
+	.openbtn:hover {
+		border-color: var(--blue);
+		color: var(--blue);
+	}
+	.iconbtn {
+		flex: none;
+		display: grid;
+		place-items: center;
+		width: 2.25rem;
+		border: 1px solid var(--blue-border);
+		border-radius: 8px;
+		background: #fff;
+		color: var(--blue-dark);
+		cursor: pointer;
+	}
+	.iconbtn:hover:not(:disabled) {
+		border-color: var(--blue);
+		color: var(--blue);
+	}
+	.iconbtn:disabled {
+		color: #c3c8d4;
+		border-color: var(--border);
+		cursor: default;
+	}
+	.icon {
+		width: 1.1rem;
+		height: 1.1rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+	/* One line: what it is, then show / save / copy. */
+	.qrrow {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		margin-top: 0.5rem;
+	}
+	.qrlabel {
+		flex: 1;
+		font-size: 0.85rem;
+		font-weight: 700;
+		color: var(--blue-dark);
+	}
+	.qrrow .iconbtn {
+		height: 2.25rem;
+	}
+	.qr {
+		margin-top: 0.5rem;
+		padding: 0.4rem;
+		/* A QR needs light quiet space around it to scan, and the card is tinted. */
+		background: #fff;
+		border: 1px solid var(--blue-border);
+		border-radius: 8px;
+	}
+	.qr svg {
+		display: block;
+		width: 100%;
+		height: auto;
+		/* Keep the modules hard-edged rather than smoothed when scaled. */
+		shape-rendering: crispEdges;
+	}
+	.sharenote {
+		margin-top: 0.5rem;
+		font-size: 0.82rem;
+		font-weight: 600;
+		color: #842029;
+	}
+</style>

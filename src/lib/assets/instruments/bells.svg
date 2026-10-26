@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 104">
+  <!-- Orchestra bells (glockenspiel) from the front: an open wooden case that tapers to the right, one row of solid silver bars that get shorter step by step from left to right, and two red-headed mallets resting on the short bars with their handles out over the front of the case. Cartoon style with a heavy ink outline. -->
+  <path d="M9 5 L119 21 Q123 21.5 123 26 L123 78 Q123 82.5 119 83 L9 99 Q5 99.5 5 95 L5 9 Q5 4.5 9 5 Z" fill="#9a6a3e" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M5 91 L123 75 L123 78 Q123 82.5 119 83 L9 99 Q5 99.5 5 95 Z" fill="#3b2a10" opacity="0.3"/>
+  <rect x="12" y="14" width="11.5" height="72" rx="2" fill="#d9dee7" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M13.5 17.5 V82.5" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <rect x="25.5" y="17.5" width="11.5" height="65" rx="2" fill="#d9dee7" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M27 21 V79" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <rect x="39" y="21" width="11.5" height="58" rx="2" fill="#d9dee7" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M40.5 24.5 V75.5" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <rect x="52.5" y="24.5" width="11.5" height="51" rx="2" fill="#d9dee7" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M54 28 V72" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <rect x="66" y="28" width="11.5" height="44" rx="2" fill="#d9dee7" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M67.5 31.5 V68.5" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <rect x="79.5" y="31.5" width="11.5" height="37" rx="2" fill="#d9dee7" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M81 35 V65" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <rect x="93" y="35" width="11.5" height="30" rx="2" fill="#d9dee7" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M94.5 38.5 V61.5" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <rect x="106.5" y="38.5" width="11.5" height="23" rx="2" fill="#d9dee7" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <path d="M108 42 V58" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+  <path d="M44 98 L80 60" stroke="#3b2a10" stroke-width="8" stroke-linecap="round"/>
+  <path d="M44 98 L80 60" stroke="#d9a066" stroke-width="3" stroke-linecap="round"/>
+  <path d="M120 96 L101 60" stroke="#3b2a10" stroke-width="8" stroke-linecap="round"/>
+  <path d="M120 96 L101 60" stroke="#d9a066" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="80" cy="60" r="9.5" fill="#e4572e" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="77" cy="57" r="2.5" fill="#ffffff" opacity="0.5"/>
+  <circle cx="101" cy="60" r="9.5" fill="#e4572e" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="98" cy="57" r="2.5" fill="#ffffff" opacity="0.5"/>
+</svg>
