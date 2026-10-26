@@ -51,6 +51,17 @@ export const ACTIVITY_TYPE_NAMES: Record<ActivityType, string> = {
 	piano: 'Piano'
 };
 
+/**
+ * The activities a site offers teachers, from a list like "piano" or
+ * "band,piano" (the PUBLIC_ACTIVITIES setting, used for demo sites). Left out,
+ * or naming nothing it knows, the site offers them all.
+ */
+export function parseActivities(raw: string | undefined): ActivityType[] {
+	const named = csv(raw ?? null).map((a) => a.trim());
+	const offered = ALL_ACTIVITY_TYPES.filter((a) => named.includes(a));
+	return offered.length ? offered : [...ALL_ACTIVITY_TYPES];
+}
+
 export interface Settings {
 	activity: ActivityType;
 	// Shown to the student and printed on their PDF, so the activity can be

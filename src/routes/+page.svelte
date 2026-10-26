@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { resolve } from '$app/paths';
+	import { env } from '$env/dynamic/public';
 	import {
 		ALL_BAND_INSTRUMENTS,
 		ALL_CONCERT_KEYS,
@@ -26,12 +27,12 @@
 	} from '$lib/music';
 	import {
 		ACTIVITY_TYPE_NAMES,
-		ALL_ACTIVITY_TYPES,
 		applyActivityType,
 		applyInstrument,
 		applyPositionSystem,
 		MAX_TITLE_LENGTH,
 		clampRange,
+		parseActivities,
 		DEFAULT_SETTINGS,
 		fingeringOptions,
 		MAX_QUESTIONS,
@@ -79,7 +80,16 @@
 	import RangeSelector from '$lib/RangeSelector.svelte';
 	import Staff from '$lib/Staff.svelte';
 
-	let settings = $state<Settings>(structuredClone(DEFAULT_SETTINGS));
+	// A demo site can offer just some of the activities (PUBLIC_ACTIVITIES).
+	const activities = parseActivities(env.PUBLIC_ACTIVITIES);
+
+	// Settings of a kind this site does not offer switch to the first it does.
+	function offered(s: Settings): Settings {
+		return activities.includes(s.activity) ? s : applyActivityType(s, activities[0]);
+	}
+	const load = (query: string) => offered(fromQuery(query));
+
+	let settings = $state<Settings>(offered(structuredClone(DEFAULT_SETTINGS)));
 
 	const ALL_VALUES: NoteValue[] = ['whole', 'half', 'quarter'];
 
@@ -216,7 +226,7 @@
 	const activePreset = $derived(presets.find((p) => p.id === activeId) ?? null);
 	// Changes worth a Save: either edits on top of a saved activity, or an
 	// activity that has never been saved at all.
-	const unsaved = $derived(!activePreset || !sameSettings(settings, fromQuery(activePreset.query)));
+	const unsaved = $derived(!activePreset || !sameSettings(settings, load(activePreset.query)));
 	const canDiscard = $derived(!!activePreset && unsaved);
 
 	onMount(() => {
@@ -225,7 +235,7 @@
 		presets = loadPresets();
 		const working = loadWorking();
 		if (working) {
-			settings = fromQuery(working.query);
+			settings = load(working.query);
 			activeId = presets.some((p) => p.id === working.presetId) ? working.presetId : null;
 		}
 		loaded = true;
@@ -296,7 +306,7 @@
 	function loadPreset(id: string) {
 		const preset = presets.find((p) => p.id === id);
 		if (!preset) return;
-		settings = fromQuery(preset.query);
+		settings = load(preset.query);
 		activeId = preset.id;
 		confirmingDiscard = false;
 		presetNote = '';
@@ -304,7 +314,7 @@
 
 	function discardChanges() {
 		if (!activePreset) return;
-		settings = fromQuery(activePreset.query);
+		settings = load(activePreset.query);
 		confirmingDiscard = false;
 		flash('Changes discarded');
 	}
@@ -623,16 +633,18 @@
 		<section class="panel settings" aria-label="Settings">
 			<fieldset>
 				<legend>Activity</legend>
-				<div class="chips">
-					{#each ALL_ACTIVITY_TYPES as choice (choice)}
-						<button
-							type="button"
-							class="chip"
-							class:on={settings.activity === choice}
-							onclick={() => selectActivity(choice)}>{ACTIVITY_TYPE_NAMES[choice]}</button
-						>
-					{/each}
-				</div>
+				{#if activities.length > 1}
+					<div class="chips">
+						{#each activities as choice (choice)}
+							<button
+								type="button"
+								class="chip"
+								class:on={settings.activity === choice}
+								onclick={() => selectActivity(choice)}>{ACTIVITY_TYPE_NAMES[choice]}</button
+							>
+						{/each}
+					</div>
+				{/if}
 				<p class="hint after">
 					{#if settings.activity === 'band'}
 						One link for the whole band: each student picks their instrument and reads in their own

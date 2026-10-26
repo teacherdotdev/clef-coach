@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import {
 	DEFAULT_SETTINGS,
 	applyActivityType,
+	parseActivities,
 	settingsFromJson,
 	settingsFromParams,
 	settingsToQuery,
@@ -118,5 +119,18 @@ describe('answer mode', () => {
 		expect(DEFAULT_SETTINGS.answerMode).toBe('draw');
 		expect(roundTrip(DEFAULT_SETTINGS).answerMode).toBe('draw');
 		expect(settingsFromParams(new URLSearchParams('inst=viola')).answerMode).toBe('buttons');
+	});
+});
+
+describe('offered activities', () => {
+	test('a demo site offers only the activities it names', () => {
+		expect(parseActivities('piano')).toEqual(['piano']);
+		expect(parseActivities('piano, band')).toEqual(['band', 'piano']);
+	});
+
+	test('a site that names none it knows offers them all', () => {
+		expect(parseActivities(undefined)).toEqual(['strings', 'band', 'piano']);
+		expect(parseActivities('')).toEqual(['strings', 'band', 'piano']);
+		expect(parseActivities('drums')).toEqual(['strings', 'band', 'piano']);
 	});
 });
