@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 104 128">
+  <!-- Baritone / euphonium, upright side view: a compact oval coil of thick tubing, a wide flared bell growing out of the coil's right side and tilted forward to the upper right, three chunky piston valves standing on the front of the coil, leadpipe and mouthpiece out to the upper left. -->
+  <!-- oval coil -->
+  <g fill="none">
+    <ellipse cx="42" cy="86" rx="28" ry="26" stroke="#3b2a10" stroke-width="16"/>
+    <ellipse cx="42" cy="86" rx="28" ry="26" stroke="#f2b632" stroke-width="10"/>
+    <path d="M14 86 A28 26 0 0 0 64 102" stroke="#3b2a10" stroke-width="10" opacity="0.2"/>
+  </g>
+  <!-- bell section rising out of the coil -->
+  <path d="M62 86 L 55 48 C 55 34, 54 22, 51 10 L 99 28 C 87 32, 79 40, 77 52 L 78 86 Z" fill="#f2b632"/>
+  <path d="M99 28 C 87 32, 79 40, 77 52 L 78 86 L 72 86 L 71 52 C 72 42, 80 34, 99 28 Z" fill="#3b2a10" opacity="0.2"/>
+  <path d="M64 78 L 59 50 C 59 40, 58 32, 57 26" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" opacity="0.45"/>
+  <path d="M62 86 L 55 48 C 55 34, 54 22, 51 10 M 99 28 C 87 32, 79 40, 77 52 L 78 86" fill="none" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- bell rim, tilted forward -->
+  <ellipse cx="75" cy="19" rx="26" ry="8" transform="rotate(20 75 19)" fill="#f2b632" stroke="#3b2a10" stroke-width="3"/>
+  <ellipse cx="75.5" cy="19.5" rx="20.5" ry="4.5" transform="rotate(20 75 19)" fill="#3b2a10" opacity="0.3"/>
+  <!-- leadpipe and mouthpiece -->
+  <path d="M20 50 C 16 42, 12 38, 9 37" fill="none" stroke="#3b2a10" stroke-width="11" stroke-linecap="round"/>
+  <path d="M20 50 C 16 42, 12 38, 9 37" fill="none" stroke="#f2b632" stroke-width="5" stroke-linecap="round"/>
+  <path d="M9 37 L5 35" fill="none" stroke="#3b2a10" stroke-width="11" stroke-linecap="round"/>
+  <path d="M9 37 L5 35" fill="none" stroke="#fbf3dc" stroke-width="5" stroke-linecap="round"/>
+  <!-- three chunky piston valves -->
+  <g stroke="#3b2a10" stroke-width="3" stroke-linejoin="round">
+    <rect x="21" y="44" width="6" height="10" fill="#fbf3dc"/>
+    <rect x="33" y="44" width="6" height="10" fill="#fbf3dc"/>
+    <rect x="45" y="44" width="6" height="10" fill="#fbf3dc"/>
+    <ellipse cx="24" cy="43" rx="6.5" ry="3.5" fill="#fbf3dc"/>
+    <ellipse cx="36" cy="43" rx="6.5" ry="3.5" fill="#fbf3dc"/>
+    <ellipse cx="48" cy="43" rx="6.5" ry="3.5" fill="#fbf3dc"/>
+    <rect x="19" y="52" width="10" height="38" rx="3" fill="#f2b632"/>
+    <rect x="31" y="52" width="10" height="38" rx="3" fill="#f2b632"/>
+    <rect x="43" y="52" width="10" height="38" rx="3" fill="#f2b632"/>
+  </g>
+  <g fill="#3b2a10" opacity="0.2">
+    <path d="M25 52 H26 A3 3 0 0 1 29 55 V87 A3 3 0 0 1 26 90 H25 Z"/>
+    <path d="M37 52 H38 A3 3 0 0 1 41 55 V87 A3 3 0 0 1 38 90 H37 Z"/>
+    <path d="M49 52 H50 A3 3 0 0 1 53 55 V87 A3 3 0 0 1 50 90 H49 Z"/>
+  </g>
+</svg>

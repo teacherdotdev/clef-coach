@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 112">
+<!-- Grand piano for Clef Coach: a black (charcoal-navy) grand seen from the keyboard end, lid with its curved edge propped open on a stick over the muted gold plate inside, a lighter case side and underside band, a row of white keys with five black keys (2 then 3) at the front, three legs. Cartoon style with a heavy ink outline to match the logo. -->
+<g transform="translate(6 0)">
+<path d="M44 76 L50 76 L49 92 L45 92 Z" fill="#3a4150" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M17 78 L27 78 L25 104 L19 104 Z" fill="#3a4150" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M85 78 L95 78 L93 104 L87 104 Z" fill="#3a4150" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M12 74 L30 38 C33 32 46 30 56 34 C70 38 72 56 88 62 C96 65 100 68 100 74 Z" fill="#5a6274" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M12 62 L12 74 L100 74 L100 62 Z" fill="#5a6274"/>
+<path d="M12 62 L30 26 C33 20 46 18 56 22 C70 26 72 44 88 50 C96 53 100 56 100 62 Z" fill="#3a4150" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M18 60 L33 29 C36 25 46 24 54 27 C66 31 68 47 85 54 C91 56 93 58 94 60 Z" fill="#c9a24a"/>
+<path d="M18 60 L33 29 C36 25 46 24 54 27 C50 38 46 50 44 60 Z" fill="#3b2a10" opacity="0.25"/>
+<path d="M80 52 L64.5 14.5" stroke="#3b2a10" stroke-width="6" stroke-linecap="round"/>
+<path d="M80 52 L64.5 14.5" stroke="#3a4150" stroke-width="1.5" stroke-linecap="round"/>
+<path d="M12 60 L30 24 C32 18 34 14 38 12 C52 8 66 6 80 6 Q40 25 12 60 Z" fill="#3a4150" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M55.5 16.5 Q41 27 28 38 L26 35 Q39 24 53 13.5 Z" fill="#ffffff" opacity="0.4"/>
+<rect x="10" y="62" width="92" height="20" rx="2" fill="#3a4150" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M10 76 L102 76 L102 80 Q102 82 100 82 L12 82 Q10 82 10 80 Z" fill="#5a6274"/>
+<rect x="16" y="62" width="80" height="11" fill="#fbfbfd" stroke="#3b2a10" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="24" y="62" width="5" height="6" fill="#262833"/>
+<rect x="34" y="62" width="5" height="6" fill="#262833"/>
+<rect x="52" y="62" width="5" height="6" fill="#262833"/>
+<rect x="62" y="62" width="5" height="6" fill="#262833"/>
+<rect x="72" y="62" width="5" height="6" fill="#262833"/>
+</g>
+</svg>

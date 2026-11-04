@@ -8,6 +8,9 @@ on:
   push:
     branches-ignore:
       - main
+      # Demo branches only exist for their Vercel preview links and are never
+      # published.
+      - demo-*
 
 permissions:
   contents: read

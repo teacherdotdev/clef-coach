@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Tuba, upright side view: a tall fat cone that widens steadily into a big bell pointing straight up, a round bottom bow into a back branch, a chunky block of three piston valves set low on the left joined to the cone, a tuning-slide bend out the right side, leadpipe and mouthpiece up the left. -->
+  <!-- tuning slide bend behind the cone -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M82 72 H104 A10 10 0 0 1 104 92 H82" stroke="#3b2a10" stroke-width="13"/>
+    <path d="M82 72 H104 A10 10 0 0 1 104 92 H82" stroke="#f2b632" stroke-width="7"/>
+    <path d="M82 72 H104 A10 10 0 0 1 104 92 H82" stroke="#3b2a10" stroke-width="7" opacity="0.25"/>
+  </g>
+  <!-- body cone, bottom bow and back branch -->
+  <path d="M26 14 C 42 20, 49 30, 50 42 L 58 98 C 58 108, 44 108, 44 98 L 44 84 L 28 84 L 28 100 C 28 126, 84 126, 84 100 L 92 42 C 93 30, 99 20, 114 14 Z" fill="#f2b632" stroke="#3b2a10" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M114 14C99 20 93 30 92 42L84 100C84 126 28 126 28 100L29 105.6C34 119 78 119 78 100L85 42C86 30 94 20 114 14Z" fill="#3b2a10" opacity="0.2"/>
+  <path d="M60 30 C 64 38, 65 46, 65 56 L 67 92" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.45"/>
+  <!-- bell rim -->
+  <ellipse cx="70" cy="14" rx="44" ry="8.5" fill="#f2b632" stroke="#3b2a10" stroke-width="3"/>
+  <ellipse cx="70" cy="14.5" rx="37" ry="5" fill="#3b2a10" opacity="0.3"/>
+  <!-- leadpipe up the left to the mouthpiece -->
+  <path d="M15 72 C 7 66, 6 52, 12 40" fill="none" stroke="#3b2a10" stroke-width="11" stroke-linecap="round"/>
+  <path d="M15 72 C 7 66, 6 52, 12 40" fill="none" stroke="#f2b632" stroke-width="5" stroke-linecap="round"/>
+  <path d="M12 40 L15 34" fill="none" stroke="#3b2a10" stroke-width="11" stroke-linecap="round"/>
+  <path d="M12 40 L15 34" fill="none" stroke="#fbf3dc" stroke-width="5" stroke-linecap="round"/>
+  <!-- chunky valve block -->
+  <g stroke="#3b2a10" stroke-width="3" stroke-linejoin="round">
+    <rect x="19" y="50" width="6" height="10" fill="#fbf3dc"/>
+    <rect x="32" y="50" width="6" height="10" fill="#fbf3dc"/>
+    <rect x="45" y="50" width="6" height="10" fill="#fbf3dc"/>
+    <ellipse cx="22" cy="49" rx="6.5" ry="3.5" fill="#fbf3dc"/>
+    <ellipse cx="35" cy="49" rx="6.5" ry="3.5" fill="#fbf3dc"/>
+    <ellipse cx="48" cy="49" rx="6.5" ry="3.5" fill="#fbf3dc"/>
+    <rect x="16" y="58" width="12" height="32" rx="3" fill="#f2b632"/>
+    <rect x="29" y="58" width="12" height="32" rx="3" fill="#f2b632"/>
+    <rect x="42" y="58" width="12" height="32" rx="3" fill="#f2b632"/>
+  </g>
+  <g fill="#3b2a10" opacity="0.2">
+    <path d="M23 58 H25 A3 3 0 0 1 28 61 V87 A3 3 0 0 1 25 90 H23 Z"/>
+    <path d="M36 58 H38 A3 3 0 0 1 41 61 V87 A3 3 0 0 1 38 90 H36 Z"/>
+    <path d="M49 58 H51 A3 3 0 0 1 54 61 V87 A3 3 0 0 1 51 90 H49 Z"/>
+  </g>
+</svg>

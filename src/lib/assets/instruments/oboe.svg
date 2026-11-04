@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Oboe, tilted: a small tan double reed with a red thread wrapping at the upper left, a slim black body covered in silver keywork, and only a slight bell at the lower right. -->
+  <g transform="translate(61 62) rotate(-40)" stroke-linejoin="round" stroke-linecap="round">
+    <g stroke="#3b2a10" stroke-width="3">
+      <path d="M-6.5 48 C-7 55 -10 59 -10.5 64 L10.5 64 C10 59 7 55 6.5 48 Z" fill="#2f3140"/>
+      <ellipse cx="0" cy="64" rx="10.5" ry="3" fill="#2f3140"/>
+      <path d="M-4.5 -44 L4.5 -44 L6 48 L-6 48 Z" fill="#2f3140"/>
+      <path d="M-2.5 -55 L-5 -70 Q0 -72 5 -70 L2.5 -55 Z" fill="#d9b07a"/>
+      <rect x="-3.5" y="-56" width="7" height="9" rx="1.5" fill="#c8553d"/>
+      <rect x="-5.5" y="-48" width="11" height="5" rx="1.5" fill="#d9dee7"/>
+    </g>
+    <path d="M-3 -42.5 L-1 -42.5 L-1 46.5 L-4.5 46.5 Z" fill="#3b2a10" opacity="0.3"/>
+    <path d="M5.5 -38 V44" fill="none" stroke="#3b2a10" stroke-width="6"/>
+    <path d="M5.5 -38 V44" fill="none" stroke="#d9dee7" stroke-width="3"/>
+    <path d="M-5.5 -10 V-30 M-5.5 10 V36" fill="none" stroke="#3b2a10" stroke-width="6"/>
+    <path d="M-5.5 -10 V-30 M-5.5 10 V36" fill="none" stroke="#d9dee7" stroke-width="3"/>
+    <g fill="#d9dee7" stroke="#3b2a10" stroke-width="2">
+      <circle cx="0" cy="-33" r="3.2"/>
+      <circle cx="0" cy="-25" r="3.5"/>
+      <circle cx="0" cy="-17" r="3.5"/>
+      <circle cx="0" cy="-9" r="3.5"/>
+      <circle cx="0" cy="13" r="3.8"/>
+      <circle cx="0" cy="21" r="3.8"/>
+      <circle cx="0" cy="29" r="3.8"/>
+      <circle cx="0" cy="38" r="3.2"/>
+    </g>
+    <g stroke="#3b2a10" stroke-width="3">
+      <rect x="-7.5" y="-1" width="15" height="5" rx="1.5" fill="#d9dee7"/>
+      <rect x="-8" y="45" width="16" height="5" rx="1.5" fill="#d9dee7"/>
+    </g>
+  </g>
+</svg>
